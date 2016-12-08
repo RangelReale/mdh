@@ -1,0 +1,21 @@
+{
+    "name": "RangelReale/mdh",
+    "description": "PHP Multiple Data Handler - configurable data parser and formatter to and from PHP format",
+    "keywords": ["format"],
+    "license": "BSD-3-Clause",
+    "minimum-stability": "dev",
+    "authors": [
+        {
+            "name": "Rangel Reale",
+            "email": "rangelspam@gmail.com"
+        }
+    ],
+    "type": "library",
+    "require": {
+    },
+    "autoload": {
+        "psr-4": {
+            "RangelReale\\MDH\\": ""
+        }
+    }    
+}
