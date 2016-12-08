@@ -10,6 +10,9 @@ class BaseConverter implements IConverter
 
     public function __construct($mdh)
     {
+        if (!($mdh instanceof BaseMDH))
+            throw new MDHException('Invalid MDH class');
+        
         $this->_mdh = $mdh;
     }
 

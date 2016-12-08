@@ -105,6 +105,29 @@ class BaseMDH
         return $value;
     }
     
+    public function convertMulti($converterFrom, $converterTo, $multiConversion, $values)
+    {
+        $ret = new MultiConversionResult();
+        foreach ($values as $vname => $vvalue) {
+            if (isset($multiConversion->attributes[$vname])) {
+                $dataType = isset($multiConversion->attributes[$vname]['dataType'])?$multiConversion->attributes[$vname]['dataType']:'raw';
+                $options = isset($multiConversion->attributes[$vname]['options'])?$multiConversion->attributes[$vname]['options']:[];
+                $optionsFrom = isset($multiConversion->attributes[$vname]['optionsFrom'])?$multiConversion->attributes[$vname]['optionsFrom']:$options;
+                $optionsTo = isset($multiConversion->attributes[$vname]['optionsTo'])?$multiConversion->attributes[$vname]['optionsTo']:$options;
+
+                try {
+                    $vvalue = $this->convert($converterFrom, $converterTo, $dataType, $vvalue, $optionsFrom, $optionsTo);
+                } catch (DataConversionException $e) {
+                    $ret->hasErrors = true;
+                    $ret->errors[$vname] = $e;
+                    $vvalue = $e;
+                }
+            }
+            $ret->result[$vname]=$vvalue;
+        }
+        return $ret;
+    }
+    
     /**
      * Gets a converter
      * 

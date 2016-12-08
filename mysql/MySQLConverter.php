@@ -42,16 +42,18 @@ class MySQLDataHandler_Datetime implements IDataHandler
     public function parse($value, $options)
     {
         $ret = \DateTime::createFromFormat($this->_type_format[$this->_type], $value);
-        if ($ret === false)
+        if ($ret === false) {
             $this->_converter->mdh()->throwDataConversionException($this->_type, 'parse', $value, $options);
+        }
         return $ret;
     }
     
     public function format($value, $options)
     {
         $value = Util::formatToDateTime($value);
-        if ($value === false)
+        if ($value === false) {
             $this->_converter->mdh()->throwDataConversionException($this->_type, 'format', $value, $options);
+        }
         return $value->format($this->_type_format[$this->_type]);
     }
 }
