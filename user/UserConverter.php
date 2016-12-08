@@ -78,7 +78,7 @@ class UserConverter implements IConverter
     
     public function getLocaleDefault()
     {
-        return $this->getLocale($this->_mdh->locale);
+        return $this->getLocale($this->_mdh->getLocale());
     }
 }
 
@@ -202,7 +202,7 @@ class UserDataHandler_Datetime implements IDataHandler
             echo '</span><br/>';
              */
             
-            $f = new \IntlDateFormatter($this->_converter->mdh()->locale, 
+            $f = new \IntlDateFormatter($this->_converter->mdh()->getLocale(), 
                 $this->_formatToICUType($f->dateFormat), 
                 $this->_formatToICUType($f->timeFormat), 
                 null, null, 
@@ -246,7 +246,7 @@ class UserConverter_DataHandler_Decimal implements IDataHandler
         if (is_array($options)) {
             if (isset($options['decimals'])) $decimals = $options['decimals'];
         }
-        $formatter = new \NumberFormatter($this->_converter->mdh()->locale, $this->_style);
+        $formatter = new \NumberFormatter($this->_converter->mdh()->getLocale(), $this->_style);
         if ($decimals >= 0) {
             
             $formatter->setAttribute(\NumberFormatter::MAX_FRACTION_DIGITS, $decimals);
