@@ -58,6 +58,8 @@ class DefaultConverter_DataHandler_Boolean implements IDataHandler
 {
     public function parse($value, $options)
     {
+        if ($value === null)
+            return null;
         if ($value)
             return true;
         return false;
@@ -65,6 +67,8 @@ class DefaultConverter_DataHandler_Boolean implements IDataHandler
     
     public function format($value, $options)
     {
+        if ($value === null)
+            return null;
         if ($value)
             return '1';
         return '0';
@@ -82,6 +86,8 @@ class DefaultConverter_DataHandler_Integer implements IDataHandler
     
     public function parse($value, $options)
     {
+        if ($value === null)
+            return null;
         if (!Util::isInteger($value)) {
             $this->_converter->mdh()->throwDataConversionException('integer', 'parse', $value, $options);
         }
@@ -90,6 +96,11 @@ class DefaultConverter_DataHandler_Integer implements IDataHandler
     
     public function format($value, $options)
     {
+        if ($value === null)
+            return null;
+        if (!Util::isInteger($value)) {
+            $this->_converter->mdh()->throwDataConversionException('integer', 'format', $value, $options);
+        }
         return $value;
     }
 }
@@ -107,6 +118,8 @@ class DefaultConverter_DataHandler_Decimal implements IDataHandler
     
     public function parse($value, $options)
     {
+        if ($value === null)
+            return null;
         if (!is_numeric($value)) {
             $this->_converter->mdh()->throwDataConversionException('decimal', 'parse', $value, $options);
         }
@@ -115,6 +128,8 @@ class DefaultConverter_DataHandler_Decimal implements IDataHandler
     
     public function format($value, $options)
     {
+        if ($value === null)
+            return null;
         $decimals = $this->_decimals;
         if (is_array($options)) {
             if (isset($options['decimals'])) 
@@ -137,11 +152,15 @@ class DefaultConverter_DataHandler_Bytes implements IDataHandler
     
     public function parse($value, $options)
     {
+        if ($value === null)
+            return null;
         $this->_converter->mdh()->throwDataConversionException('bytes', 'parse', $value, $options);
     }
     
     public function format($value, $options)
     {
+        if ($value === null)
+            return null;
         $decimals = 2;
         if (isset($options['decimals']))
             $decimals = $options['decimals'];
@@ -194,18 +213,37 @@ class DefaultConverter_DataHandler_TimePeriod implements IDataHandler
     
     public function parse($value, $options)
     {
-        $time = $this->_converter->mdh()->parse(isset($options['__converter'])?$options['__converter']:'', 'time', $value, $options);
-        $dt=getdate($time->getTimestamp());
+        if ($value === null)
+            return null;
+        $time = $this->createFormatter($options)->parse($value);
+        if ($time === false) {
+            $this->_converter->mdh()->throwDataConversionException('timeperiod', 'parse', $value, $options);
+        }
+        $dt=getdate($time);
         return $dt['seconds'] + ($dt['minutes'] * 60) + ($dt['hours'] * 60 * 60);
     }
     
     public function format($value, $options)
     {
+        if ($value === null)
+            return null;
+        if (!is_numeric($value)) {
+            $this->_converter->mdh()->throwDataConversionException('timeperiod', 'format', $value, $options);
+        }
         $hours = intval(intval($value) / 3600);
         $minutes = intval(($value / 60) % 60);
         $seconds = intval($value % 60);
-        $dt = new \DateTime();
-        $dt->setTimestamp(mktime($hours, $minutes, $seconds, null, null, null));
-        return $this->_converter->mdh()->format(isset($options['__converter'])?$options['__converter']:'', 'time', $dt, $options);
+        return $this->createFormatter($options)->format(mktime($hours, $minutes, $seconds, null, null, null));
     }
+    
+    protected function createFormatter($options)
+    {
+        $f = new \IntlDateFormatter($this->_converter->mdh()->getLocale(), 
+            \IntlDateFormatter::NONE, 
+            \IntlDateFormatter::NONE, 
+            null, null, 
+            'HH:mm:ss');
+        $f->setLenient(false);
+        return $f;
+    }    
 }

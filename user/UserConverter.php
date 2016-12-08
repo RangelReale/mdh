@@ -60,11 +60,15 @@ class UserConverter_DataHandler_Boolean implements IDataHandler
     
     public function parse($value, $options)
     {
+        if ($value === null)
+            return null;
         return $this->_converter->getLocaleDefault()->parseBoolean($value, $options);
     }
     
     public function format($value, $options)
     {
+        if ($value === null)
+            return null;
         return $this->_converter->getLocaleDefault()->formatBoolean($value, $options);
     }
 }
@@ -99,6 +103,8 @@ class UserDataHandler_Datetime implements IDataHandler
     
     public function parse($value, $options)
     {
+        if ($value === null)
+            return null;
         $formatter = $this->createFormatter($options);
         $parse = false;
         foreach ($formatter as $fmt) {
@@ -115,6 +121,8 @@ class UserDataHandler_Datetime implements IDataHandler
     
     public function format($value, $options)
     {
+        if ($value === null)
+            return null;
         $value = Util::formatToDateTime($value);
         if ($value === false)
             $this->_converter->mdh()->throwDataConversionException($this->_type, 'format', $value, $options);
@@ -192,12 +200,14 @@ class UserConverter_DataHandler_Decimal implements IDataHandler
     public function __construct($converter, $decimals = 2, $style = \NumberFormatter::DECIMAL)
     {
         $this->_converter = $converter;
-        $this->_decimals = 2;
+        $this->_decimals = $decimals;
         $this->_style = $style;
     }
     
     public function parse($value, $options)
     {
+        if ($value === null)
+            return null;
         $offset = 0;
         $ret = $this->createFormatter($options)->parse($value, \NumberFormatter::TYPE_DOUBLE, $offset);
         if ($ret === false || $offset != strlen($value))
@@ -207,6 +217,8 @@ class UserConverter_DataHandler_Decimal implements IDataHandler
     
     public function format($value, $options)
     {
+        if ($value === null)
+            return null;
         return $this->createFormatter($options)->format($value);
     }
     
@@ -219,9 +231,10 @@ class UserConverter_DataHandler_Decimal implements IDataHandler
         $formatter = new \NumberFormatter($this->_converter->mdh()->getLocale(), $this->_style);
         $formatter->setAttribute(\NumberFormatter::LENIENT_PARSE, false);
         if ($decimals >= 0) {
-            
             $formatter->setAttribute(\NumberFormatter::MAX_FRACTION_DIGITS, $decimals);
             $formatter->setAttribute(\NumberFormatter::MIN_FRACTION_DIGITS, $decimals);
+        } else {
+            $formatter->setAttribute(\NumberFormatter::MAX_FRACTION_DIGITS, 7);
         }
         return $formatter;
     }

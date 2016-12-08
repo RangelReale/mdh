@@ -41,6 +41,8 @@ class MySQLDataHandler_Datetime implements IDataHandler
     
     public function parse($value, $options)
     {
+        if ($value === null)
+            return null;
         $ret = \DateTime::createFromFormat($this->_type_format[$this->_type], $value);
         if ($ret === false) {
             $this->_converter->mdh()->throwDataConversionException($this->_type, 'parse', $value, $options);
@@ -50,6 +52,8 @@ class MySQLDataHandler_Datetime implements IDataHandler
     
     public function format($value, $options)
     {
+        if ($value === null)
+            return null;
         $value = Util::formatToDateTime($value);
         if ($value === false) {
             $this->_converter->mdh()->throwDataConversionException($this->_type, 'format', $value, $options);
