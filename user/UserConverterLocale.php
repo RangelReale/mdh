@@ -9,26 +9,44 @@ use RangelReale\mdh\IDataHandler;
  */
 class UserConverterLocale
 {
-    public function getDateFormat($type)
+    /**
+     * @param IDataHandler::FORMAT_XXX $format
+     * @return UserConverterLocaleTimeFormat|array(UserConverterLocaleTimeFormat)
+     */
+    public function getDateFormat($format)
     {
-        return new UserConverterLocaleTimeFormat('', $type);
+        return new UserConverterLocaleTimeFormat('', $format);
     }
     
-    public function getTimeFormat($type)
+    /**
+     * @param IDataHandler::FORMAT_XXX $format
+     * @return UserConverterLocaleTimeFormat|array(UserConverterLocaleTimeFormat)
+     */
+    public function getTimeFormat($format)
     {
-        return new UserConverterLocaleTimeFormat('', IDataHandler::FORMAT_NONE, $type);
+        return new UserConverterLocaleTimeFormat('', IDataHandler::FORMAT_NONE, $format);
     }
     
-    public function getDateTimeFormat($type)
+    /**
+     * @param IDataHandler::FORMAT_XXX $format
+     * @return UserConverterLocaleTimeFormat|array(UserConverterLocaleTimeFormat)
+     */
+    public function getDateTimeFormat($format)
     {
-        return new UserConverterLocaleTimeFormat('', $type, $type);
+        return new UserConverterLocaleTimeFormat('', $format, $format);
     }
-    
+
+    /**
+     * Parse boolean string
+     */
     public function parseBoolean($value, $options)
     {
         return $value == true;
     }
     
+    /**
+     * Format boolean value
+     */
     public function formatBoolean($value, $options)
     {
         return (string)$value;
