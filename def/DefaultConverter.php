@@ -2,64 +2,29 @@
 
 namespace RangelReale\mdh\def;
 
-use RangelReale\mdh\IConverter;
+use RangelReale\mdh\BaseConverter;
 use RangelReale\mdh\IDataHandler;
 use RangelReale\mdh\Util;
-use RangelReale\mdh\InvalidDataHandlerException;
 use RangelReale\mdh\DataConversionException;
 
 /**
  * Class DefaultConverter
  */
-class DefaultConverter implements IConverter
+class DefaultConverter extends BaseConverter
 {
-    private $_mdh;
-    private $_datahandlers = [];
-    
     public function __construct($mdh)
     {
-        $this->_mdh = $mdh;
-        
-        $this->_datahandlers['raw'] = new DefaultConverter_DataHandler_Raw();
-        $this->_datahandlers['text'] = new DefaultConverter_DataHandler_Text();
-        $this->_datahandlers['boolean'] = new DefaultConverter_DataHandler_Boolean();
-        $this->_datahandlers['integer'] = new DefaultConverter_DataHandler_Integer();
-        $this->_datahandlers['decimal'] = new DefaultConverter_DataHandler_Decimal();
-        $this->_datahandlers['currency'] = new DefaultConverter_DataHandler_Decimal();
-        $this->_datahandlers['decimalfull'] = new DefaultConverter_DataHandler_Decimal(-1);
-        $this->_datahandlers['bytes'] = new DefaultConverter_DataHandler_Bytes($this);
-        $this->_datahandlers['timeperiod'] = new DefaultConverter_DataHandler_TimePeriod($this);
-    }
-    
-    public function mdh()
-    {
-        return $this->_mdh;
-    }
-    
-    public function canConvert($datatype)
-    {
-        return isset($this->_datahandlers[$datatype]);
-    }
-    
-    public function parse($datatype, $value, $options = [])
-    {
-        if (isset($this->_datahandlers[$datatype]))
-            return $this->_datahandlers[$datatype]->parse($value, $options);
-        
-        throw new InvalidDataHandlerException($datatype);
-    }
-    
-    public function format($datatype, $value, $options = [])
-    {
-        if (isset($this->_datahandlers[$datatype]))
-            return $this->_datahandlers[$datatype]->format($value, $options);
-        
-        throw new InvalidDataHandlerException($datatype);
-    }
-    
-    public function addHandler($datatype, $handler)
-    {
-        $this->_datahandlers[$datatype] = $handler;
+        parent::__construct($mdh);
+
+        $this->setHandler('raw', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Raw']);
+        $this->setHandler('text', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Text']);
+        $this->setHandler('boolean', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Boolean']);
+        $this->setHandler('integer', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Integer', Util::CREATEOBJECT_THIS]);
+        $this->setHandler('decimal', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Decimal', Util::CREATEOBJECT_THIS]);
+        $this->setHandler('currency', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Decimal', Util::CREATEOBJECT_THIS]);
+        $this->setHandler('decimalfull', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Decimal', Util::CREATEOBJECT_THIS, -1]);
+        $this->setHandler('bytes', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Bytes', Util::CREATEOBJECT_THIS]);
+        $this->setHandler('timeperiod', ['RangelReale\mdh\def\DefaultConverter_DataHandler_TimePeriod', Util::CREATEOBJECT_THIS]);
     }
 }
 
@@ -108,10 +73,17 @@ class DefaultConverter_DataHandler_Boolean implements IDataHandler
 
 class DefaultConverter_DataHandler_Integer implements IDataHandler
 {
+    private $_converter;
+    
+    public function __construct($converter)
+    {
+        $this->_converter = $converter;
+    }
+    
     public function parse($value, $options)
     {
         if (!Util::isInteger($value)) {
-            throw new DataConversionException('integer', 'parse', $value);
+            $this->_converter->mdh()->throwDataConversionException('integer', 'parse', $value, $options);
         }
         return (int)$value;
     }
@@ -124,17 +96,19 @@ class DefaultConverter_DataHandler_Integer implements IDataHandler
 
 class DefaultConverter_DataHandler_Decimal implements IDataHandler
 {
+    private $_converter;
     private $_decimals;
     
-    public function __construct($decimals = 2)
+    public function __construct($converter, $decimals = 2)
     {
+        $this->_converter = $converter;
         $this->_decimals = 2;
     }
     
     public function parse($value, $options)
     {
         if (!is_numeric($value)) {
-            throw new DataConversionException('decimal', 'parse', $value);
+            $this->_converter->mdh()->throwDataConversionException('decimal', 'parse', $value, $options);
         }
         return (float)$value;
     }
@@ -143,7 +117,8 @@ class DefaultConverter_DataHandler_Decimal implements IDataHandler
     {
         $decimals = $this->_decimals;
         if (is_array($options)) {
-            if (isset($options['decimals'])) $decimals = $options['decimals'];
+            if (isset($options['decimals'])) 
+                $decimals = $options['decimals'];
         }
         if ($decimals >= 0)
             return number_format($value, $decimals, '.', '');
@@ -162,7 +137,7 @@ class DefaultConverter_DataHandler_Bytes implements IDataHandler
     
     public function parse($value, $options)
     {
-        throw new DataConversionException('bytes', 'parse', $value);
+        $this->_converter->mdh()->throwDataConversionException('bytes', 'parse', $value, $options);
     }
     
     public function format($value, $options)

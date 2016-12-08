@@ -3,6 +3,7 @@
 namespace RangelReale\mdh;
 
 use RangelReale\mdh\def\DefaultConverter;
+use RangelReale\mdh\user\UserConverter;
 
 /**
  * Class BaseMDH
@@ -11,6 +12,7 @@ class BaseMDH
 {
     private $_converters = [];
     private $_convertersProp = [];
+    private $_dataconversionmessage;
 
     public $dateFormat = IDataHandler::FORMAT_SHORT;
     public $timeFormat = IDataHandler::FORMAT_SHORT;
@@ -21,13 +23,20 @@ class BaseMDH
      */
     public function __construct()
     {
+        $this->_dataconversionmessage = new DataConversionMessage;
+        $this->initConverters();
+    }
+    
+    protected function initConverters()
+    {
         $this->_converters['default'] = new DefaultConverter($this);
+        $this->_converters['user'] = new UserConverter($this);
     }
     
     /**
      * Convert the value to PHP format using the converter
      * 
-     * @param string $converter converter name
+     * @param string $converter converter name. If null, return $value unparsed. If '', use 'default' converter
      * @param string $datatype data type
      * @param mixed $value value
      * @param array $options options
@@ -36,7 +45,10 @@ class BaseMDH
      */
     public function parse($converter, $datatype, $value, $options = [])
     {
-        if ($converter == '') $converter = 'default';
+        if ($converter === null)
+            return $value;
+        if ($converter == '') 
+            $converter = 'default';
         $options = array_merge($options, ['__converter'=>$converter]);
         
         if (isset($this->_converters[$converter])) {
@@ -50,7 +62,7 @@ class BaseMDH
     /**
      * Convert the value from PHP format using the converter
      * 
-     * @param string $converter converter name
+     * @param string $converter converter name. If null, return $value unparsed. If '', use 'default' converter
      * @param string $datatype data type
      * @param mixed $value value
      * @param array $options options
@@ -59,7 +71,10 @@ class BaseMDH
      */
     public function format($converter, $datatype, $value, $options = [])
     {
-        if ($converter == '') $converter = 'default';
+        if ($converter === null)
+            return $value;
+        if ($converter == '') 
+            $converter = 'default';
         $options = array_merge($options, ['__converter'=>$converter]);
         
         if (isset($this->_converters[$converter])) {
@@ -108,7 +123,7 @@ class BaseMDH
      * @param string $name converter name
      * @param IConverter $converter converter
      */
-    public function addConverter($name, $converter)
+    public function setConverter($name, $converter)
     {
         $this->_converters[$name] = $converter;
     }
@@ -121,6 +136,27 @@ class BaseMDH
     public function getLocale()
     {
         return 'en-US';
+    }
+    
+    public function getDataConversionMessage()
+    {
+        return $this->_dataconversionmessage;
+    }
+    
+    /**
+     * @param DataConversionMessage $dataconversionmessage
+     */
+    public function setDataConversionMessage($dataconversionmessage)
+    {
+        $this->_dataconversionmessage = $dataconversionmessage;
+    }
+    
+    /**
+     * Throws a data converstion exception
+     */
+    public function throwDataConversionException($datatype, $parseOrFormat, $value, $options, $extra = '')
+    {
+        throw new DataConversionException($this->getDataConversionMessage()->getMessage($datatype, $parseOrFormat, $value, $options, $extra));
     }
     
     /**

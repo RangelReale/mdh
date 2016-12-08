@@ -16,6 +16,9 @@ interface IConverter
     // check if it is possible to convert this data type
     public function canConvert($datatype);
     
+    // returns the handler for the data type
+    public function getHandler($datatype);
+    
     // add a handler for a data type
-    public function addHandler($datatype, $handler);
+    public function setHandler($datatype, $handler);
 }

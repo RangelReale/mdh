@@ -2,58 +2,29 @@
 
 namespace RangelReale\mdh\mysql;
 
-use RangelReale\mdh\IConverter;
+use RangelReale\mdh\BaseConverter;
 use RangelReale\mdh\IDataHandler;
 use RangelReale\mdh\Util;
-use RangelReale\mdh\InvalidDataHandlerException;
 use RangelReale\mdh\DataConversionException;
 
 /**
  * Class MySQLConverter
  */
-class MySQLConverter implements IConverter
+class MySQLConverter extends BaseConverter
 {
-    private $_mdh;
-    private $_datahandlers = [];
-    
     public function __construct($mdh)
     {
-        $this->_mdh = $mdh;
-        
-        $this->_datahandlers['date'] = new MySQLDataHandler_Datetime('date');
-        $this->_datahandlers['time'] = new MySQLDataHandler_Datetime('time');
-        $this->_datahandlers['datetime'] = new MySQLDataHandler_Datetime('datetime');
-    }
-    
-    public function canConvert($datatype)
-    {
-        return isset($this->_datahandlers[$datatype]);
-    }
-    
-    public function parse($datatype, $value, $options = [])
-    {
-        if (isset($this->_datahandlers[$datatype]))
-            return $this->_datahandlers[$datatype]->parse($value, $options);
-        
-        throw new InvalidDataHandlerException($datatype);
-    }
-    
-    public function format($datatype, $value, $options = [])
-    {
-        if (isset($this->_datahandlers[$datatype]))
-            return $this->_datahandlers[$datatype]->format($value, $options);
-        
-        throw new InvalidDataHandlerException($datatype);
-    }
-    
-    public function addHandler($datatype, $handler)
-    {
-        $this->_datahandlers[$datatype] = $handler;
+        parent::__construct($mdh);
+
+        $this->setHandler('date', ['RangelReale\mdh\mysql\MySQLDataHandler_Datetime', Util::CREATEOBJECT_THIS, 'date']);
+        $this->setHandler('time', ['RangelReale\mdh\mysql\MySQLDataHandler_Datetime', Util::CREATEOBJECT_THIS, 'time']);
+        $this->setHandler('datetime', ['RangelReale\mdh\mysql\MySQLDataHandler_Datetime', Util::CREATEOBJECT_THIS, 'datetime']);
     }
 }
 
 class MySQLDataHandler_Datetime implements IDataHandler
 {
+    private $_converter;
     private $_type;
     
     private $_type_format = [
@@ -62,8 +33,9 @@ class MySQLDataHandler_Datetime implements IDataHandler
         'datetime' => 'Y-m-d H:i:s',
     ];
     
-    public function __construct($type)
+    public function __construct($converter, $type)
     {
+        $this->_converter = $converter;
         $this->_type = $type;
     }
     
@@ -71,13 +43,15 @@ class MySQLDataHandler_Datetime implements IDataHandler
     {
         $ret = \DateTime::createFromFormat($this->_type_format[$this->_type], $value);
         if ($ret === false)
-            throw new DataConversionException($this->_type, 'parse', $value);
+            $this->_converter->mdh()->throwDataConversionException($this->_type, 'parse', $value, $options);
         return $ret;
     }
     
     public function format($value, $options)
     {
-        $value = Util::formatToDateTime($value, $this->_type);
+        $value = Util::formatToDateTime($value);
+        if ($value === false)
+            $this->_converter->mdh()->throwDataConversionException($this->_type, 'format', $value, $options);
         return $value->format($this->_type_format[$this->_type]);
     }
 }

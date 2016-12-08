@@ -2,83 +2,50 @@
 
 namespace RangelReale\mdh\user;
 
-use RangelReale\mdh\IConverter;
+use RangelReale\mdh\BaseConverter;
 use RangelReale\mdh\IDataHandler;
 use RangelReale\mdh\Util;
-use RangelReale\mdh\InvalidDataHandlerException;
 use RangelReale\mdh\DataConversionException;
 
 /**
  * Class UserConverter
  */
-class UserConverter implements IConverter
+class UserConverter extends BaseConverter
 {
-    private $_mdh;
-    private $_datahandlers = [];
     private $_deflocale;
     private $_locales = [];
     
     public function __construct($mdh)
     {
-        $this->_mdh = $mdh;
+        parent::__construct($mdh);
         
         $this->_deflocale = new UserConverterLocale();
-        
-        $this->_datahandlers['boolean'] = new UserConverter_DataHandler_Boolean($this);
-        $this->_datahandlers['decimal'] = new UserConverter_DataHandler_Decimal($this, 2, \NumberFormatter::DECIMAL);
-        $this->_datahandlers['currency'] = new UserConverter_DataHandler_Decimal($this, 2, \NumberFormatter::CURRENCY);
-        $this->_datahandlers['decimalfull'] = new UserConverter_DataHandler_Decimal($this, -1);
-        $this->_datahandlers['date'] = new UserDataHandler_Datetime($this, 'date');
-        $this->_datahandlers['time'] = new UserDataHandler_Datetime($this, 'time');
-        $this->_datahandlers['datetime'] = new UserDataHandler_Datetime($this, 'datetime');
+
+        $this->setHandler('boolean', ['RangelReale\mdh\user\UserConverter_DataHandler_Boolean', Util::CREATEOBJECT_THIS]);
+        $this->setHandler('decimal', ['RangelReale\mdh\user\UserConverter_DataHandler_Decimal', Util::CREATEOBJECT_THIS, 2, \NumberFormatter::DECIMAL]);
+        $this->setHandler('currency', ['RangelReale\mdh\user\UserConverter_DataHandler_Decimal', Util::CREATEOBJECT_THIS, 2, \NumberFormatter::CURRENCY]);
+        $this->setHandler('decimalfull', ['RangelReale\mdh\user\UserConverter_DataHandler_Decimal', Util::CREATEOBJECT_THIS, -1]);
+        $this->setHandler('date', ['RangelReale\mdh\user\UserDataHandler_Datetime', Util::CREATEOBJECT_THIS, 'date']);
+        $this->setHandler('time', ['RangelReale\mdh\user\UserDataHandler_Datetime', Util::CREATEOBJECT_THIS, 'time']);
+        $this->setHandler('datetime', ['RangelReale\mdh\user\UserDataHandler_Datetime', Util::CREATEOBJECT_THIS, 'datetime']);
     }
-    
-    public function mdh()
-    {
-        return $this->_mdh;
-    }
-    
-    public function canConvert($datatype)
-    {
-        return isset($this->_datahandlers[$datatype]);
-    }
-    
-    public function parse($datatype, $value, $options = [])
-    {
-        if (isset($this->_datahandlers[$datatype]))
-            return $this->_datahandlers[$datatype]->parse($value, $options);
-        
-        throw new InvalidDataHandlerException($datatype);
-    }
-    
-    public function format($datatype, $value, $options = [])
-    {
-        if (isset($this->_datahandlers[$datatype]))
-            return $this->_datahandlers[$datatype]->format($value, $options);
-        
-        throw new InvalidDataHandlerException($datatype);
-    }
-    
-    public function addHandler($datatype, $handler)
-    {
-        $this->_datahandlers[$datatype] = $handler;
-    }
-    
-    public function addLocale($locale, $userconverterlocale)
+
+    public function setLocale($locale, $userconverterlocale)
     {
         $this->_locales[$locale] = $userconverterlocale;
     }
     
     public function getLocale($locale)
     {
-        if (isset($this->_locales[$locale]))
+        if (isset($this->_locales[$locale])) {
             return $this->_locales[$locale];
+        }
         return $this->_deflocale;
     }
     
     public function getLocaleDefault()
     {
-        return $this->getLocale($this->_mdh->getLocale());
+        return $this->getLocale($this->mdh()->getLocale());
     }
 }
 
@@ -140,7 +107,7 @@ class UserDataHandler_Datetime implements IDataHandler
                 break;
         }
         if ($parse === false)
-            throw new DataConversionException($this->_type, 'parse', $value);
+            $this->_converter->mdh()->throwDataConversionException($this->_type, 'parse', $value, $options);
         $ret = new \DateTime();
         $ret->setTimestamp($parse);
         return $ret;
@@ -148,7 +115,9 @@ class UserDataHandler_Datetime implements IDataHandler
     
     public function format($value, $options)
     {
-        $value = Util::formatToDateTime($value, $this->_type);
+        $value = Util::formatToDateTime($value);
+        if ($value === false)
+            $this->_converter->mdh()->throwDataConversionException($this->_type, 'format', $value, $options);
         $formatter = $this->createFormatterSingle($options);
         return $formatter->format($value);
     }
@@ -162,7 +131,7 @@ class UserDataHandler_Datetime implements IDataHandler
     protected function createFormatter($options)
     {
         $ltype = null;
-        if (isset($options['format']))
+        if (isset($options['format']) && $options['format'] !== null)
             $ltype = (int)$options['format'];
         
         $locale = $this->_converter->getLocaleDefault();
@@ -229,9 +198,10 @@ class UserConverter_DataHandler_Decimal implements IDataHandler
     
     public function parse($value, $options)
     {
-        $ret = $this->createFormatter($options)->parse($value);
-        if ($ret === false)
-            throw new DataConversionException('decimal', 'parse', $value);
+        $offset = 0;
+        $ret = $this->createFormatter($options)->parse($value, \NumberFormatter::TYPE_DOUBLE, $offset);
+        if ($ret === false || $offset != strlen($value))
+            $this->_converter->mdh()->throwDataConversionException('decimal', 'parse', $value, $options);
         return $ret;
     }
     
@@ -247,6 +217,7 @@ class UserConverter_DataHandler_Decimal implements IDataHandler
             if (isset($options['decimals'])) $decimals = $options['decimals'];
         }
         $formatter = new \NumberFormatter($this->_converter->mdh()->getLocale(), $this->_style);
+        $formatter->setAttribute(\NumberFormatter::LENIENT_PARSE, false);
         if ($decimals >= 0) {
             
             $formatter->setAttribute(\NumberFormatter::MAX_FRACTION_DIGITS, $decimals);
