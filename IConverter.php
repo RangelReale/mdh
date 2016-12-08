@@ -8,14 +8,14 @@ namespace RangelReale\mdh;
 interface IConverter
 {
     // convert the value from handler format to PHP format
-    public function parse($data, $value, $options);
+    public function parse($datatype, $value, $options);
     
     // convert the value from php format to handler format
-    public function format($data, $value, $options);
+    public function format($datatype, $value, $options);
     
     // check if it is possible to convert this data type
-    public function canConvert($data);
+    public function canConvert($datatype);
     
     // add a handler for a data type
-    public function addHandler($data, $handler);
+    public function addHandler($datatype, $handler);
 }

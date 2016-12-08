@@ -7,7 +7,7 @@ namespace RangelReale\mdh;
  */
 class DataConversionException extends MDHException
 {
-    public function __construct($data, $parseOrFormat, $value)
+    public function __construct($datatype, $parseOrFormat, $value)
     {
         $sval = '';
         try
@@ -16,6 +16,6 @@ class DataConversionException extends MDHException
         } catch (Exception $e) {
             $sval = '<value>';
         }
-        parent::__construct('Invalid "'.$data.'" data "'.$parseOrFormat.'" conversion: '.$sval);
+        parent::__construct('Invalid "'.$datatype.'" datatype "'.$parseOrFormat.'" conversion: '.$sval);
     }
 }

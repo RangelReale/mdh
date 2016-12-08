@@ -22,37 +22,37 @@ class BaseMDH
     }
     
     // convert the value from handler format to PHP format
-    public function parse($converter, $data, $value, $options = [])
+    public function parse($converter, $datatype, $value, $options = [])
     {
         if ($converter == '') $converter = 'default';
         $options = array_merge($options, ['__converter'=>$converter]);
         
         if (isset($this->_converters[$converter])) {
-            if ($this->_converters[$converter]->canConvert($data))
-                return $this->_converters[$converter]->parse($data, $value, $options, $this);
-            return $this->_converters['default']->parse($data, $value, $options, $this);
+            if ($this->_converters[$converter]->canConvert($datatype))
+                return $this->_converters[$converter]->parse($datatype, $value, $options, $this);
+            return $this->_converters['default']->parse($datatype, $value, $options, $this);
         }
         throw new InvalidConverterException($converter);
     }
     
     // convert the value from php format to handler format
-    public function format($converter, $data, $value, $options = [])
+    public function format($converter, $datatype, $value, $options = [])
     {
         if ($converter == '') $converter = 'default';
         $options = array_merge($options, ['__converter'=>$converter]);
         
         if (isset($this->_converters[$converter])) {
-            if ($this->_converters[$converter]->canConvert($data))
-                return $this->_converters[$converter]->format($data, $value, $options, $this);
-            return $this->_converters['default']->format($data, $value, $options, $this);
+            if ($this->_converters[$converter]->canConvert($datatype))
+                return $this->_converters[$converter]->format($datatype, $value, $options, $this);
+            return $this->_converters['default']->format($datatype, $value, $options, $this);
         }
         throw new InvalidConverterException($converter);
     }
 
     // convert the value from one converter to another
-    public function convert($converterFrom, $converterTo, $data, $value, $optionsFrom = [], $optionsTo = [])
+    public function convert($converterFrom, $converterTo, $datatype, $value, $optionsFrom = [], $optionsTo = [])
     {
-        return $this->format($converterTo, $data, $this->parse($converterFrom, $data, $value, $optionsFrom), $optionsTo);
+        return $this->format($converterTo, $datatype, $this->parse($converterFrom, $datatype, $value, $optionsFrom), $optionsTo);
     }
     
     // gets a converter
@@ -105,13 +105,13 @@ class BaseMDHConverter
         $this->_converter = $converter;
     }
     
-    public function parse($data, $value, $options = [])
+    public function parse($datatype, $value, $options = [])
     {
-        return $this->_mdh->parse($this->_converter, $data, $value, $options);
+        return $this->_mdh->parse($this->_converter, $datatype, $value, $options);
     }
     
-    public function format($data, $value, $options = [])
+    public function format($datatype, $value, $options = [])
     {
-        return $this->_mdh->format($this->_converter, $data, $value, $options);
+        return $this->_mdh->format($this->_converter, $datatype, $value, $options);
     }
 }

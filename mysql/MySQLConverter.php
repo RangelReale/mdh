@@ -25,30 +25,30 @@ class MySQLConverter implements IConverter
         $this->_datahandlers['datetime'] = new MySQLDataHandler_Datetime('datetime');
     }
     
-    public function canConvert($data)
+    public function canConvert($datatype)
     {
-        return isset($this->_datahandlers[$data]);
+        return isset($this->_datahandlers[$datatype]);
     }
     
-    public function parse($data, $value, $options = [])
+    public function parse($datatype, $value, $options = [])
     {
-        if (isset($this->_datahandlers[$data]))
-            return $this->_datahandlers[$data]->parse($value, $options);
+        if (isset($this->_datahandlers[$datatype]))
+            return $this->_datahandlers[$datatype]->parse($value, $options);
         
-        throw new InvalidDataHandlerException($data);
+        throw new InvalidDataHandlerException($datatype);
     }
     
-    public function format($data, $value, $options = [])
+    public function format($datatype, $value, $options = [])
     {
-        if (isset($this->_datahandlers[$data]))
-            return $this->_datahandlers[$data]->format($value, $options);
+        if (isset($this->_datahandlers[$datatype]))
+            return $this->_datahandlers[$datatype]->format($value, $options);
         
-        throw new InvalidDataHandlerException($data);
+        throw new InvalidDataHandlerException($datatype);
     }
     
-    public function addHandler($data, $handler)
+    public function addHandler($datatype, $handler)
     {
-        $this->_datahandlers[$data] = $handler;
+        $this->_datahandlers[$datatype] = $handler;
     }
 }
 
