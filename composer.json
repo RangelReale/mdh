@@ -1,5 +1,5 @@
 {
-    "name": "RangelReale/mdh",
+    "name": "rangelreale/mdh",
     "description": "PHP Multiple Data Handler - configurable data parser and formatter to and from PHP format",
     "keywords": ["format"],
     "license": "BSD-3-Clause",
