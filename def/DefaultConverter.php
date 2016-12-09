@@ -25,6 +25,7 @@ class DefaultConverter extends BaseConverter
         $this->setHandler('decimalfull', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Decimal', Util::CREATEOBJECT_THIS, -1]);
         $this->setHandler('bytes', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Bytes', Util::CREATEOBJECT_THIS]);
         $this->setHandler('timeperiod', ['RangelReale\mdh\def\DefaultConverter_DataHandler_TimePeriod', Util::CREATEOBJECT_THIS]);
+        $this->setHandler('bitmask', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Bitmask', Util::CREATEOBJECT_THIS]);
     }
 }
 
@@ -246,4 +247,59 @@ class DefaultConverter_DataHandler_TimePeriod implements IDataHandler
         $f->setLenient(false);
         return $f;
     }    
+}
+
+class DefaultConverter_DataHandler_Bitmask implements IDataHandler
+{
+    private $_converter;
+    
+    public function __construct($converter)
+    {
+        $this->_converter = $converter;
+    }
+    
+	/**
+	 * Parses the value as a bit mask.
+	 * @param mixed the list of items as an array or comma-delimited string
+	 * @return integer the bit mask
+	 */
+    public function parse($value, $options)
+    {
+        if ($value === null)
+            return null;
+        if (!is_array($value))
+            $value = explode(',', $value);
+
+        $ret = 0;
+        foreach ($value as $item)
+        {
+            $ret |= pow(2, $item);
+        }
+        return $ret;
+    }
+    
+    /**
+     * Formats the value as a bit mask.
+     * @param integer the value to be formatted
+     * @return array a list of the selected bits
+     */
+    public function format($value, $options)
+    {
+        if ($value === null)
+            return null;
+        
+        if (!Util::isInteger($value)) {
+            $this->_converter->mdh()->throwDataConversionException('bitmask', 'format', $value, $options);
+        }
+        $value = (int)$value;
+
+        $ret = array();
+        for ($i=0; $i<32; $i++)
+        {
+            $p = pow(2, $i);
+            if (($value & $p)==$p)
+                $ret[]=$i;
+        }
+        return $ret;
+    }
 }
