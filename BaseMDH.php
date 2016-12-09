@@ -110,20 +110,44 @@ class BaseMDH
         $ret = new MultiConversionResult();
         foreach ($values as $vname => $vvalue) {
             if (isset($multiConversion->attributes[$vname])) {
-                $dataType = isset($multiConversion->attributes[$vname]['dataType'])?$multiConversion->attributes[$vname]['dataType']:'raw';
-                $options = isset($multiConversion->attributes[$vname]['options'])?$multiConversion->attributes[$vname]['options']:[];
-                $optionsFrom = isset($multiConversion->attributes[$vname]['optionsFrom'])?$multiConversion->attributes[$vname]['optionsFrom']:$options;
-                $optionsTo = isset($multiConversion->attributes[$vname]['optionsTo'])?$multiConversion->attributes[$vname]['optionsTo']:$options;
+                if (is_array($multiConversion->attributes[$vname])) {
+                    $dataType = isset($multiConversion->attributes[$vname]['dataType'])?$multiConversion->attributes[$vname]['dataType']:'raw';
+                    $options = isset($multiConversion->attributes[$vname]['options'])?$multiConversion->attributes[$vname]['options']:[];
+                    $optionsFrom = isset($multiConversion->attributes[$vname]['optionsFrom'])?$multiConversion->attributes[$vname]['optionsFrom']:$options;
+                    $optionsTo = isset($multiConversion->attributes[$vname]['optionsTo'])?$multiConversion->attributes[$vname]['optionsTo']:$options;
+                } else {
+                    $dataType = $multiConversion->attributes[$vname];
+                    $options = [];
+                    $optionsFrom = [];
+                    $optionsTo = [];
+                }
 
                 try {
                     $vvalue = $this->convert($converterFrom, $converterTo, $dataType, $vvalue, $optionsFrom, $optionsTo);
                 } catch (DataConversionException $e) {
+                    if ($multiConversion->throwErrors) {
+                        throw $e;
+                    }
                     $ret->hasErrors = true;
                     $ret->errors[$vname] = $e;
                     $vvalue = $e;
                 }
             }
             $ret->result[$vname]=$vvalue;
+        }
+        return $ret;
+    }
+
+    public function convertMultiList($converterFrom, $converterTo, $multiConversion, $list)
+    {
+        $ret = new MultiConversionResult();
+        foreach ($list as $listindex => $listitem) {
+            $r = $this->convertMulti($converterFrom, $converterTo, $multiConversion, $listitem);
+            if ($r->hasErrors) {
+                $ret->hasErrors = true;
+                $ret->errors[$listindex] = $r->errors;
+            }
+            $ret->result[] = $r->result;
         }
         return $ret;
     }
@@ -179,7 +203,8 @@ class BaseMDH
      */
     public function throwDataConversionException($datatype, $parseOrFormat, $value, $options, $extra = '')
     {
-        throw new DataConversionException($this->getDataConversionMessage()->getMessage($datatype, $parseOrFormat, $value, $options, $extra));
+        throw new DataConversionException($this->getDataConversionMessage()->getMessage($datatype, $parseOrFormat, $value, $options, $extra),
+            $datatype, $parseOrFormat, $value, $options, $extra);
     }
     
     /**
