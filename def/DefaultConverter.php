@@ -5,7 +5,6 @@ namespace RangelReale\mdh\def;
 use RangelReale\mdh\BaseConverter;
 use RangelReale\mdh\IDataHandler;
 use RangelReale\mdh\Util;
-use RangelReale\mdh\DataConversionException;
 
 /**
  * Class DefaultConverter
