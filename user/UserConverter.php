@@ -60,14 +60,14 @@ class UserConverter_DataHandler_Boolean implements IDataHandler
     
     public function parse($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         return $this->_converter->getLocaleDefault()->parseBoolean($value, $options);
     }
     
     public function format($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         return $this->_converter->getLocaleDefault()->formatBoolean($value, $options);
     }
@@ -103,7 +103,7 @@ class UserDataHandler_Datetime implements IDataHandler
     
     public function parse($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         $formatter = $this->createFormatter($options);
         $parse = false;
@@ -121,7 +121,7 @@ class UserDataHandler_Datetime implements IDataHandler
     
     public function format($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         $value = Util::formatToDateTime($value);
         if ($value === false)
@@ -206,7 +206,7 @@ class UserConverter_DataHandler_Decimal implements IDataHandler
     
     public function parse($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         $offset = 0;
         $ret = $this->createFormatter($options)->parse($value, \NumberFormatter::TYPE_DOUBLE, $offset);
@@ -217,7 +217,7 @@ class UserConverter_DataHandler_Decimal implements IDataHandler
     
     public function format($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         return $this->createFormatter($options)->format($value);
     }

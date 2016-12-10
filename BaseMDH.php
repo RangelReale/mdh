@@ -13,6 +13,7 @@ class BaseMDH
     private $_converters = [];
     private $_convertersProp = [];
     private $_dataconversionmessage;
+    private $_datatypealiases = [];
 
     public $dateFormat = IDataHandler::FORMAT_SHORT;
     public $timeFormat = IDataHandler::FORMAT_SHORT;
@@ -31,6 +32,8 @@ class BaseMDH
     {
         $this->_converters['default'] = new DefaultConverter($this);
         $this->_converters['user'] = new UserConverter($this);
+        
+        $this->addDataTypeAlias('decimalfull', 'decimal');
     }
     
     /**
@@ -52,8 +55,10 @@ class BaseMDH
         $options = array_merge($options, ['__converter'=>$converter]);
         
         if (isset($this->_converters[$converter])) {
-            if ($this->_converters[$converter]->canConvert($datatype))
-                return $this->_converters[$converter]->parse($datatype, $value, $options, $this);
+            foreach ($this->getDataTypeAliasesFor($datatype) as $curdatatype) {
+                if ($this->_converters[$converter]->canConvert($curdatatype))
+                    return $this->_converters[$converter]->parse($curdatatype, $value, $options, $this);
+            }
             return $this->_converters['default']->parse($datatype, $value, $options, $this);
         }
         throw new InvalidConverterException($converter);
@@ -78,8 +83,10 @@ class BaseMDH
         $options = array_merge($options, ['__converter'=>$converter]);
         
         if (isset($this->_converters[$converter])) {
-            if ($this->_converters[$converter]->canConvert($datatype))
-                return $this->_converters[$converter]->format($datatype, $value, $options, $this);
+            foreach ($this->getDataTypeAliasesFor($datatype) as $curdatatype) {
+                if ($this->_converters[$converter]->canConvert($curdatatype))
+                    return $this->_converters[$converter]->format($curdatatype, $value, $options, $this);
+            }
             return $this->_converters['default']->format($datatype, $value, $options, $this);
         }
         throw new InvalidConverterException($converter);
@@ -105,6 +112,15 @@ class BaseMDH
         return $value;
     }
     
+    /**
+     * Convert multiple fields at the same time
+     * @param string $converterFrom From converter
+     * @param string $converterTo To converter
+     * @param \RangelReale\mdh\MultiConversion $multiConversion 
+     * @param array $values
+     * @return \RangelReale\mdh\MultiConversionResult
+     * @throws \RangelReale\mdh\DataConversionException
+     */
     public function convertMulti($converterFrom, $converterTo, $multiConversion, $values)
     {
         $ret = new MultiConversionResult();
@@ -138,6 +154,15 @@ class BaseMDH
         return $ret;
     }
 
+    /**
+     * Convert an array of multiple fields at the same time
+     * @param string $converterFrom From converter
+     * @param string $converterTo To converter
+     * @param \RangelReale\mdh\MultiConversion $multiConversion 
+     * @param array $list
+     * @return \RangelReale\mdh\MultiConversionResult
+     * @throws \RangelReale\mdh\DataConversionException
+     */
     public function convertMultiList($converterFrom, $converterTo, $multiConversion, $list)
     {
         $ret = new MultiConversionResult();
@@ -173,6 +198,20 @@ class BaseMDH
     public function setConverter($name, $converter)
     {
         $this->_converters[$name] = $converter;
+    }
+    
+    /**
+     * Adds a data type alias
+     * 
+     * @param string $datatype From datatype
+     * @param string $alias To datatype
+     */
+    public function addDataTypeAlias($datatype, $alias)
+    {
+        if (!isset($this->_datatypealiases[$datatype])) {
+            $this->_datatypealiases[$datatype] = [];
+        }
+        $this->_datatypealiases[$datatype][]=$alias;
     }
     
     /**
@@ -229,6 +268,14 @@ class BaseMDH
             ' on line ' . $trace[0]['line'],
             E_USER_NOTICE);
         return null;
+    }
+    
+    private function getDataTypeAliasesFor($datatype)
+    {
+        $ret = [$datatype];
+        if (isset($this->_datatypealiases[$datatype]))
+            $ret = array_merge($ret, $this->_datatypealiases[$datatype]);
+        return $ret;
     }
 }
 

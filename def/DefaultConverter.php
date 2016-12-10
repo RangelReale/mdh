@@ -5,6 +5,7 @@ namespace RangelReale\mdh\def;
 use RangelReale\mdh\BaseConverter;
 use RangelReale\mdh\IDataHandler;
 use RangelReale\mdh\Util;
+use RangelReale\mdh\DataHandler_NOP;
 
 /**
  * Class DefaultConverter
@@ -15,29 +16,19 @@ class DefaultConverter extends BaseConverter
     {
         parent::__construct($mdh);
 
-        $this->setHandler('raw', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Raw']);
+        $this->setHandler('raw', ['RangelReale\mdh\DataHandler_NOP']);
         $this->setHandler('text', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Text']);
         $this->setHandler('boolean', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Boolean']);
         $this->setHandler('integer', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Integer', Util::CREATEOBJECT_THIS]);
         $this->setHandler('decimal', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Decimal', Util::CREATEOBJECT_THIS]);
         $this->setHandler('currency', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Decimal', Util::CREATEOBJECT_THIS]);
         $this->setHandler('decimalfull', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Decimal', Util::CREATEOBJECT_THIS, -1]);
+        $this->setHandler('date', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Datetime', Util::CREATEOBJECT_THIS, 'date']);
+        $this->setHandler('time', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Datetime', Util::CREATEOBJECT_THIS, 'time']);
+        $this->setHandler('datetime', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Datetime', Util::CREATEOBJECT_THIS, 'datetime']);
         $this->setHandler('bytes', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Bytes', Util::CREATEOBJECT_THIS]);
         $this->setHandler('timeperiod', ['RangelReale\mdh\def\DefaultConverter_DataHandler_TimePeriod', Util::CREATEOBJECT_THIS]);
         $this->setHandler('bitmask', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Bitmask', Util::CREATEOBJECT_THIS]);
-    }
-}
-
-class DefaultConverter_DataHandler_Raw implements IDataHandler
-{
-    public function parse($value, $options)
-    {
-        return $value;
-    }
-    
-    public function format($value, $options)
-    {
-        return $value;
     }
 }
 
@@ -45,11 +36,15 @@ class DefaultConverter_DataHandler_Text implements IDataHandler
 {
     public function parse($value, $options)
     {
+        if ($value === null || $value == '')
+            return null;
         return htmlspecialchars_decode($value, ENT_QUOTES | ENT_SUBSTITUTE);
     }
     
     public function format($value, $options)
     {
+        if ($value === null || $value == '')
+            return null;
         return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE);
     }
 }
@@ -58,7 +53,7 @@ class DefaultConverter_DataHandler_Boolean implements IDataHandler
 {
     public function parse($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         if ($value)
             return true;
@@ -67,7 +62,7 @@ class DefaultConverter_DataHandler_Boolean implements IDataHandler
     
     public function format($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         if ($value)
             return '1';
@@ -86,7 +81,7 @@ class DefaultConverter_DataHandler_Integer implements IDataHandler
     
     public function parse($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         if (!Util::isInteger($value)) {
             $this->_converter->mdh()->throwDataConversionException('integer', 'parse', $value, $options);
@@ -96,7 +91,7 @@ class DefaultConverter_DataHandler_Integer implements IDataHandler
     
     public function format($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         if (!Util::isInteger($value)) {
             $this->_converter->mdh()->throwDataConversionException('integer', 'format', $value, $options);
@@ -118,17 +113,17 @@ class DefaultConverter_DataHandler_Decimal implements IDataHandler
     
     public function parse($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         if (!is_numeric($value)) {
             $this->_converter->mdh()->throwDataConversionException('decimal', 'parse', $value, $options);
         }
-        return (float)$value;
+        return (double)$value;
     }
     
     public function format($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         $decimals = $this->_decimals;
         if (is_array($options)) {
@@ -138,6 +133,38 @@ class DefaultConverter_DataHandler_Decimal implements IDataHandler
         if ($decimals >= 0)
             return number_format($value, $decimals, '.', '');
         return $value;
+    }
+}
+
+class DefaultConverter_DataHandler_Datetime implements IDataHandler
+{
+    private $_converter;
+    private $_type;
+    
+    public function __construct($converter, $type)
+    {
+        $this->_converter = $converter;
+        $this->_type = $type;
+    }
+    
+    public function parse($value, $options)
+    {
+        if ($value === null || $value == '')
+            return null;
+        $value = Util::formatToDateTime($value);
+        if ($value === false)
+            $this->_converter->mdh()->throwDataConversionException($this->_type, 'format', $value, $options);
+        return $value;
+    }
+    
+    public function format($value, $options)
+    {
+        if ($value === null || $value == '')
+            return null;
+        $value = Util::formatToDateTime($value);
+        if ($value === false)
+            $this->_converter->mdh()->throwDataConversionException($this->_type, 'format', $value, $options);
+        return $value->getTimestamp();
     }
 }
 
@@ -152,14 +179,14 @@ class DefaultConverter_DataHandler_Bytes implements IDataHandler
     
     public function parse($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         $this->_converter->mdh()->throwDataConversionException('bytes', 'parse', $value, $options);
     }
     
     public function format($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         $decimals = 2;
         if (isset($options['decimals']))
@@ -213,19 +240,22 @@ class DefaultConverter_DataHandler_TimePeriod implements IDataHandler
     
     public function parse($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
+        if (Util::isInteger($value)) {
+            return (int)$value;
+        }
         $time = $this->createFormatter($options)->parse($value);
         if ($time === false) {
             $this->_converter->mdh()->throwDataConversionException('timeperiod', 'parse', $value, $options);
         }
         $dt=getdate($time);
-        return $dt['seconds'] + ($dt['minutes'] * 60) + ($dt['hours'] * 60 * 60);
+        return (int)($dt['seconds'] + ($dt['minutes'] * 60) + ($dt['hours'] * 60 * 60));
     }
     
     public function format($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         if (!is_numeric($value)) {
             $this->_converter->mdh()->throwDataConversionException('timeperiod', 'format', $value, $options);
@@ -264,7 +294,7 @@ class DefaultConverter_DataHandler_Bitmask implements IDataHandler
 	 */
     public function parse($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         if (!is_array($value))
             $value = explode(',', $value);
@@ -284,7 +314,7 @@ class DefaultConverter_DataHandler_Bitmask implements IDataHandler
      */
     public function format($value, $options)
     {
-        if ($value === null)
+        if ($value === null || $value == '')
             return null;
         
         if (!Util::isInteger($value)) {
