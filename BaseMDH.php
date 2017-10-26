@@ -59,7 +59,11 @@ class BaseMDH
                 if ($this->_converters[$converter]->canConvert($curdatatype))
                     return $this->_converters[$converter]->parse($curdatatype, $value, $options, $this);
             }
-            return $this->_converters['default']->parse($datatype, $value, $options, $this);
+            foreach ($this->getDataTypeAliasesFor($datatype) as $curdatatype) {
+                if ($this->_converters['default']->canConvert($curdatatype))
+                    return $this->_converters['default']->parse($curdatatype, $value, $options, $this);
+            }
+            $this->throwDataConversionException($datatype, 'parse', $value, $options);
         }
         throw new InvalidConverterException($converter);
     }
@@ -87,7 +91,11 @@ class BaseMDH
                 if ($this->_converters[$converter]->canConvert($curdatatype))
                     return $this->_converters[$converter]->format($curdatatype, $value, $options, $this);
             }
-            return $this->_converters['default']->format($datatype, $value, $options, $this);
+            foreach ($this->getDataTypeAliasesFor($datatype) as $curdatatype) {
+                if ($this->_converters['default']->canConvert($curdatatype))
+                    return $this->_converters['default']->format($curdatatype, $value, $options, $this);
+            }
+            $this->throwDataConversionException($datatype, 'format', $value, $options);
         }
         throw new InvalidConverterException($converter);
     }
