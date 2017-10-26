@@ -11,14 +11,14 @@ use RangelReale\mdh\Util;
  */
 class MySQLConverter extends BaseConverter
 {
-    public function __construct($mdh, $config = [])
+    public function init()
     {
+        parent::init();
         $this->setHandlers([
             'date' => ['class' => 'RangelReale\mdh\mysql\MySQLDataHandler_Datetime', 'type' => 'date'],
             'time' => ['class' => 'RangelReale\mdh\mysql\MySQLDataHandler_Datetime', 'type' => 'time'],
             'datetime' => ['class' => 'RangelReale\mdh\mysql\MySQLDataHandler_Datetime', 'type' => 'datetime'],
         ]);        
-        parent::__construct($mdh, $config);
     }
 }
 

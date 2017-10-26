@@ -17,7 +17,11 @@ class UserConverter extends BaseConverter
     public function __construct($mdh, $config = [])
     {
         $this->_deflocale = new UserConverterLocale();
-
+        parent::__construct($mdh, $config);
+    }
+    
+    public function init()
+    {
         $this->setHandlers([
             'boolean' => ['class' => 'RangelReale\mdh\user\UserConverter_DataHandler_Boolean'],
             'decimal' => ['class' => 'RangelReale\mdh\user\UserConverter_DataHandler_Decimal', 'decimals'=> 2, 'style'=> \NumberFormatter::DECIMAL],
@@ -27,8 +31,6 @@ class UserConverter extends BaseConverter
             'time' => ['class' => 'RangelReale\mdh\user\UserDataHandler_Datetime', 'type' => 'time'],
             'datetime' => ['class' => 'RangelReale\mdh\user\UserDataHandler_Datetime', 'type' => 'datetime'],
         ]);
-        
-        parent::__construct($mdh, $config);
     }
 
     public function setLocale($locale, $userconverterlocale)

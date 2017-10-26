@@ -11,8 +11,9 @@ use RangelReale\mdh\Util;
  */
 class DefaultConverter extends BaseConverter
 {
-    public function __construct($mdh, $config = [])
+    public function init()
     {
+        parent::init();
         setHandlers([
             'raw' => ['class' => 'RangelReale\mdh\DataHandler_NOP'],
             'text' => ['class' => 'RangelReale\mdh\def\DefaultConverter_DataHandler_Text'],
@@ -28,8 +29,6 @@ class DefaultConverter extends BaseConverter
             'timeperiod' => ['class' => 'RangelReale\mdh\def\DefaultConverter_DataHandler_TimePeriod'],
             'bitmask' => ['class' => 'RangelReale\mdh\def\DefaultConverter_DataHandler_Bitmask'],
         ]);
-
-        parent::__construct($mdh, $config);
     }
 }
 

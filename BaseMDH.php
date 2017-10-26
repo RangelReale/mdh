@@ -18,30 +18,13 @@ class BaseMDH extends Object
     private $_dataconversionmessagedef = 'RangelReale\mdh\DataConversionMessage';
     private $_dataconversionmessage;
 
-    private $_datatypealiases = [];
+    private $_datatypealiases = [
+        'decimalfull' => ['decimal'],
+    ];
 
     public $dateFormat = IDataHandler::FORMAT_SHORT;
     public $timeFormat = IDataHandler::FORMAT_SHORT;
     public $dateTimeFormat = IDataHandler::FORMAT_SHORT;
-
-    /**
-     * Constructor
-     */
-    public function __construct($config = [])
-    {
-        $this->initConverters();
-        parent::__construct($config);
-    }
-    
-    protected function initConverters()
-    {
-        /*
-        $this->_converters['default'] = new DefaultConverter($this);
-        $this->_converters['user'] = new UserConverter($this);
-         */
-        
-        $this->addDataTypeAlias('decimalfull', 'decimal');
-    }
     
     /**
      * Convert the value to PHP format using the converter
@@ -265,12 +248,19 @@ class BaseMDH extends Object
      * @param string $datatype From datatype
      * @param string $alias To datatype
      */
-    public function addDataTypeAlias($datatype, $alias)
+    public function setDataTypeAlias($datatype, $alias)
     {
         if (!isset($this->_datatypealiases[$datatype])) {
             $this->_datatypealiases[$datatype] = [];
         }
         $this->_datatypealiases[$datatype][]=$alias;
+    }
+    
+    public function setDataTypeAliases($values)
+    {
+        foreach ($values as $dt => $alias) {
+            $this->setDataTypeAlias($dt, $alias);
+        }
     }
     
     /**
@@ -329,7 +319,7 @@ class BaseMDH extends Object
     }
     
     /**
-     * Throws a data converstion exception
+     * Throws a data conversion exception
      */
     public function throwDataConversionException($datatype, $parseOrFormat, $value, $options, $extra = '')
     {
@@ -345,20 +335,10 @@ class BaseMDH extends Object
      */
     public function __get($name)
     {
-        if (isset($this->_converters[$name])) {
-            if (!isset($this->_convertersProp[$name])) {
-                $this->_convertersProp[$name] = new BaseMDHConverter($this, $name);
-            }
-            return $this->_convertersProp[$name];;
+        if (isset($this->_convertersdef[$name])) {
+            return $this->getConverter($name);
         }
-        
-        $trace = debug_backtrace();
-        trigger_error(
-            'Undefined property via __get(): ' . $name .
-            ' in ' . $trace[0]['file'] .
-            ' on line ' . $trace[0]['line'],
-            E_USER_NOTICE);
-        return null;
+        return parent::__get($name);
     }
     
     private function getDataTypeAliasesFor($datatype)
@@ -367,28 +347,5 @@ class BaseMDH extends Object
         if (isset($this->_datatypealiases[$datatype]))
             $ret = array_merge($ret, $this->_datatypealiases[$datatype]);
         return $ret;
-    }
-}
-
-// Helper to return converter as property
-class BaseMDHConverter
-{
-    private $_mdh;
-    private $_converter;
-    
-    public function __construct($mdh, $converter)
-    {
-        $this->_mdh = $mdh;
-        $this->_converter = $converter;
-    }
-    
-    public function parse($datatype, $value, $options = [])
-    {
-        return $this->_mdh->parse($this->_converter, $datatype, $value, $options);
-    }
-    
-    public function format($datatype, $value, $options = [])
-    {
-        return $this->_mdh->format($this->_converter, $datatype, $value, $options);
     }
 }
