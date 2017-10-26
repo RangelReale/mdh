@@ -233,7 +233,7 @@ class DefaultConverter_DataHandler_TimePeriod extends BaseDataHandler
     
     protected function createFormatter($options)
     {
-        $f = new \IntlDateFormatter($this->mdh()->getLocale(), 
+        $f = new \IntlDateFormatter($this->mdh()->locale, 
             \IntlDateFormatter::NONE, 
             \IntlDateFormatter::NONE, 
             null, null, 

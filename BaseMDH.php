@@ -10,6 +10,11 @@ use RangelReale\mdh\base\ObjectUtil;
  */
 class BaseMDH extends Object
 {
+    public $locale = 'en-US';
+    public $dateFormat = IDataHandler::FORMAT_SHORT;
+    public $timeFormat = IDataHandler::FORMAT_SHORT;
+    public $dateTimeFormat = IDataHandler::FORMAT_SHORT;
+    
     private $_converters = [];
     private $_convertersdef = [
         'default' => 'RangelReale\mdh\def\DefaultConverter',
@@ -21,10 +26,6 @@ class BaseMDH extends Object
     private $_datatypealiases = [
         'decimalfull' => ['decimal'],
     ];
-
-    public $dateFormat = IDataHandler::FORMAT_SHORT;
-    public $timeFormat = IDataHandler::FORMAT_SHORT;
-    public $dateTimeFormat = IDataHandler::FORMAT_SHORT;
     
     /**
      * Convert the value to PHP format using the converter
@@ -262,17 +263,7 @@ class BaseMDH extends Object
             $this->setDataTypeAlias($dt, $alias);
         }
     }
-    
-    /**
-     * Gets the locale
-     * 
-     * @return string
-     */
-    public function getLocale()
-    {
-        return 'en-US';
-    }
-    
+       
     public function getDataConversionMessage()
     {
         if (isset($this->_dataconversionmessage)) {

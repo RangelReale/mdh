@@ -13,15 +13,12 @@ class UserConverter extends BaseConverter
 {
     private $_deflocale;
     private $_locales = [];
-    
-    public function __construct($mdh, $config = [])
-    {
-        $this->_deflocale = new UserConverterLocale();
-        parent::__construct($mdh, $config);
-    }
+    private $_localesdef = [];
     
     public function init()
     {
+        $this->_deflocale = new UserConverterLocale($this->mdh());
+        
         $this->setHandlers([
             'boolean' => ['class' => 'RangelReale\mdh\user\UserConverter_DataHandler_Boolean'],
             'decimal' => ['class' => 'RangelReale\mdh\user\UserConverter_DataHandler_Decimal', 'decimals'=> 2, 'style'=> \NumberFormatter::DECIMAL],
@@ -33,22 +30,52 @@ class UserConverter extends BaseConverter
         ]);
     }
 
-    public function setLocale($locale, $userconverterlocale)
-    {
-        $this->_locales[$locale] = $userconverterlocale;
-    }
     
-    public function getLocale($locale)
+    public function getLocale($id)
     {
-        if (isset($this->_locales[$locale])) {
-            return $this->_locales[$locale];
+        if (isset($this->_locales[$id])) {
+            return $this->_locales[$id];
         }
-        return $this->_deflocale;
+
+        if (isset($this->_localesdef[$id])) {
+            $definition = $this->_localesdef[$id];
+            if (is_object($definition) && !$definition instanceof Closure) {
+                return $this->_locales[$id] = $definition;
+            } else {
+                return $this->_locales[$id] = ObjectUtil::createObject($definition, [$this->mdh()]);
+            }
+        } else {
+            return $this->_deflocale;
+        }                    
+    }
+
+    public function setLocale($id, $definition)
+    {
+        if ($definition === null) {
+            unset($this->_locales[$id], $this->_localesdef[$id]);
+            return;
+        }
+
+        unset($this->_locales[$id]);
+
+        if (is_object($definition) || is_callable($definition, true)) {
+            // an object, a class name, or a PHP callable
+            $this->_localesdef[$id] = $definition;
+        } elseif (is_array($definition)) {
+            // a configuration array
+            if (isset($definition['class'])) {
+                $this->_localesdef[$id] = $definition;
+            } else {
+                throw new MDHException("The configuration for the \"$id\" locale must contain a \"class\" element.");
+            }
+        } else {
+            throw new MDHException("Unexpected configuration type for the \"$id\" locale: " . gettype($definition));
+        }
     }
     
     public function getLocaleDefault()
     {
-        return $this->getLocale($this->mdh()->getLocale());
+        return $this->getLocale($this->mdh()->locale);
     }
 }
 
@@ -168,7 +195,7 @@ class UserDataHandler_Datetime extends BaseDataHandler
             echo '</span><br/>';
              */
             
-            $f = new \IntlDateFormatter($this->mdh()->getLocale(), 
+            $f = new \IntlDateFormatter($this->mdh()->locale, 
                 $this->_formatToICUType($f->dateFormat), 
                 $this->_formatToICUType($f->timeFormat), 
                 null, null, 
@@ -209,7 +236,7 @@ class UserConverter_DataHandler_Decimal extends BaseDataHandler
         if (is_array($options)) {
             if (isset($options['decimals'])) $decimals = $options['decimals'];
         }
-        $formatter = new \NumberFormatter($this->mdh()->getLocale(), $this->style);
+        $formatter = new \NumberFormatter($this->mdh()->locale, $this->style);
         $formatter->setAttribute(\NumberFormatter::LENIENT_PARSE, false);
         if ($decimals >= 0) {
             $formatter->setAttribute(\NumberFormatter::MAX_FRACTION_DIGITS, $decimals);

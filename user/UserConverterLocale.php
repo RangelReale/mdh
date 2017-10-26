@@ -2,13 +2,22 @@
 
 namespace RangelReale\mdh\user;
 
+use RangelReale\mdh\base\Object;
 use RangelReale\mdh\IDataHandler;
 
 /**
  * Class UserConverterLocale
  */
-class UserConverterLocale
+class UserConverterLocale extends Object
 {
+    private $_mdh;
+
+    public function __construct($mdh, $config = [])
+    {
+        $this->_mdh = $mdh;
+        parent::__construct($config);
+    }
+    
     /**
      * @param IDataHandler::FORMAT_XXX $format
      * @return UserConverterLocaleTimeFormat|array(UserConverterLocaleTimeFormat)
