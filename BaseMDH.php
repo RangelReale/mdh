@@ -15,7 +15,9 @@ class BaseMDH extends Object
         'default' => 'RangelReale\mdh\def\DefaultConverter',
         'user' => 'RangelReale\mdh\user\UserConverter',
     ];
+    private $_dataconversionmessagedef = 'RangelReale\mdh\DataConversionMessage';
     private $_dataconversionmessage;
+
     private $_datatypealiases = [];
 
     public $dateFormat = IDataHandler::FORMAT_SHORT;
@@ -27,9 +29,8 @@ class BaseMDH extends Object
      */
     public function __construct($config = [])
     {
-        parent::__construct($config);
-        $this->_dataconversionmessage = new DataConversionMessage;
         $this->initConverters();
+        parent::__construct($config);
     }
     
     protected function initConverters()
@@ -284,7 +285,20 @@ class BaseMDH extends Object
     
     public function getDataConversionMessage()
     {
-        return $this->_dataconversionmessage;
+        if (isset($this->_dataconversionmessage)) {
+            return $this->_dataconversionmessage;
+        }
+
+        if (isset($this->_dataconversionmessagedef)) {
+            $definition = $this->_dataconversionmessagedef;
+            if (is_object($definition) && !$definition instanceof Closure) {
+                return $this->_dataconversionmessage = $definition;
+            } else {
+                return $this->_dataconversionmessage = ObjectUtil::createObject($definition);
+            }
+        } else {
+            throw new MDHException('Data conversion message not set');
+        }            
     }
     
     /**
@@ -292,7 +306,26 @@ class BaseMDH extends Object
      */
     public function setDataConversionMessage($dataconversionmessage)
     {
-        $this->_dataconversionmessage = $dataconversionmessage;
+        if ($dataconversionmessage === null) {
+            unset($this->_dataconversionmessage, $this->_dataconversionmessagedef);
+            return;
+        }
+
+        unset($this->_dataconversionmessage);
+
+        if (is_object($dataconversionmessage) || is_callable($dataconversionmessage, true)) {
+            // an object, a class name, or a PHP callable
+            $this->_dataconversionmessagedef = $dataconversionmessage;
+        } elseif (is_array($dataconversionmessage)) {
+            // a configuration array
+            if (isset($dataconversionmessage['class'])) {
+                $this->_dataconversionmessagedef = $dataconversionmessage;
+            } else {
+                throw new MDHException("The configuration for the \"$id\" data conversion message must contain a \"class\" element.");
+            }
+        } else {
+            throw new MDHException("Unexpected configuration type for the \"$id\" datqa conversion message: " . gettype($dataconversionmessage));
+        }
     }
     
     /**

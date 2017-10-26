@@ -2,7 +2,9 @@
 
 namespace RangelReale\mdh;
 
-class DataConversionMessage
+use RangelReale\mdh\base\Object;
+
+class DataConversionMessage extends Object
 {
     public function getMessage($datatype, $parseOrFormat, $value, $options, $extra)
     {
