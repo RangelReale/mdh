@@ -5,7 +5,6 @@ namespace RangelReale\mdh\user;
 use RangelReale\mdh\BaseConverter;
 use RangelReale\mdh\BaseDataHandler;
 use RangelReale\mdh\Util;
-use RangelReale\mdh\DataConversionException;
 
 /**
  * Class UserConverter
