@@ -83,15 +83,17 @@ class UserConverter_DataHandler_Boolean extends BaseDataHandler
 {
     public function parse($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         return $this->converter()->getLocaleDefault()->parseBoolean($value, $options);
     }
     
     public function format($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         return $this->converter()->getLocaleDefault()->formatBoolean($value, $options);
     }
 }
@@ -119,8 +121,9 @@ class UserDataHandler_Datetime extends BaseDataHandler
     
     public function parse($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         $formatter = $this->createFormatter($options);
         $parse = false;
         foreach ($formatter as $fmt) {
@@ -128,8 +131,9 @@ class UserDataHandler_Datetime extends BaseDataHandler
             if ($parse !== false)
                 break;
         }
-        if ($parse === false)
+        if ($parse === false) {
             $this->mdh()->throwDataConversionException($this->type, 'parse', $value, $options);
+        }
         $ret = new \DateTime();
         $ret->setTimestamp($parse);
         return $ret;
@@ -137,11 +141,13 @@ class UserDataHandler_Datetime extends BaseDataHandler
     
     public function format($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         $value = Util::formatToDateTime($value);
-        if ($value === false)
+        if ($value === false) {
             $this->mdh()->throwDataConversionException($this->type, 'format', $value, $options);
+        }
         $formatter = $this->createFormatterSingle($options);
         return $formatter->format($value);
     }
@@ -155,8 +161,9 @@ class UserDataHandler_Datetime extends BaseDataHandler
     protected function createFormatter($options)
     {
         $ltype = null;
-        if (isset($options['format']) && $options['format'] !== null)
+        if (isset($options['format']) && $options['format'] !== null) {
             $ltype = (int)$options['format'];
+        }
         
         $locale = $this->converter()->getLocaleDefault();
         $fmt = new UserConverterLocaleTimeFormat();
@@ -214,19 +221,22 @@ class UserConverter_DataHandler_Decimal extends BaseDataHandler
     
     public function parse($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         $offset = 0;
         $ret = $this->createFormatter($options)->parse($value, \NumberFormatter::TYPE_DOUBLE, $offset);
-        if ($ret === false || $offset != strlen($value))
+        if ($ret === false || $offset != strlen($value)) {
             $this->mdh()->throwDataConversionException('decimal', 'parse', $value, $options);
+        }
         return $ret;
     }
     
     public function format($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         return $this->createFormatter($options)->format($value);
     }
     

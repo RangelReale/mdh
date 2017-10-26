@@ -34,8 +34,9 @@ class MySQLDataHandler_Datetime extends BaseDataHandler
     
     public function parse($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         $ret = \DateTime::createFromFormat($this->_type_format[$this->type], $value);
         if ($ret === false) {
             $this->mdh()->throwDataConversionException($this->type, 'parse', $value, $options);
@@ -45,8 +46,9 @@ class MySQLDataHandler_Datetime extends BaseDataHandler
     
     public function format($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         $value = Util::formatToDateTime($value);
         if ($value === false) {
             $this->mdh()->throwDataConversionException($this->type, 'format', $value, $options);

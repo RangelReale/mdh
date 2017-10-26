@@ -36,56 +36,64 @@ class DefaultConverter_DataHandler_Text extends BaseDataHandler
 {
     public function parse($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         return htmlspecialchars_decode($value, ENT_QUOTES | ENT_SUBSTITUTE);
     }
     
     public function format($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE);
     }
 }
 
 class DefaultConverter_DataHandler_Boolean extends BaseDataHandler
 {
-    public function parse($value, $options)
+    public function parse($value, $options) 
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
-        if ($value)
+        }
+        if ($value) {
             return true;
+        }
         return false;
     }
     
-    public function format($value, $options)
+    public function format($value, $options) 
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
-        if ($value)
+        }
+        if ($value) {
             return '1';
+        }
         return '0';
     }
 }
 
 class DefaultConverter_DataHandler_Integer extends BaseDataHandler
 {
-    public function parse($value, $options)
+    public function parse($value, $options) 
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         if (!Util::isInteger($value)) {
             $this->mdh()->throwDataConversionException('integer', 'parse', $value, $options);
         }
         return (int)$value;
     }
     
-    public function format($value, $options)
+    public function format($value, $options) 
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         if (!Util::isInteger($value)) {
             $this->mdh()->throwDataConversionException('integer', 'format', $value, $options);
         }
@@ -99,8 +107,9 @@ class DefaultConverter_DataHandler_Decimal extends BaseDataHandler
     
     public function parse($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         if (!is_numeric($value)) {
             $this->mdh()->throwDataConversionException('decimal', 'parse', $value, $options);
         }
@@ -109,15 +118,18 @@ class DefaultConverter_DataHandler_Decimal extends BaseDataHandler
     
     public function format($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         $decimals = $this->decimals;
         if (is_array($options)) {
-            if (isset($options['decimals'])) 
+            if (isset($options['decimals']))  {
                 $decimals = $options['decimals'];
+            }
         }
-        if ($decimals >= 0)
+        if ($decimals >= 0) {
             return number_format($value, $decimals, '.', '');
+        }
         return $value;
     }
 }
@@ -128,21 +140,25 @@ class DefaultConverter_DataHandler_Datetime extends BaseDataHandler
     
     public function parse($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         $value = Util::formatToDateTime($value);
-        if ($value === false)
+        if ($value === false) {
             $this->mdh()->throwDataConversionException($this->type, 'format', $value, $options);
+        }
         return $value;
     }
     
     public function format($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         $value = Util::formatToDateTime($value);
-        if ($value === false)
+        if ($value === false) {
             $this->mdh()->throwDataConversionException($this->type, 'format', $value, $options);
+        }
         return $value->getTimestamp();
     }
 }
@@ -151,18 +167,21 @@ class DefaultConverter_DataHandler_Bytes extends BaseDataHandler
 {
     public function parse($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         $this->mdh()->throwDataConversionException('bytes', 'parse', $value, $options);
     }
     
     public function format($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         $decimals = 2;
-        if (isset($options['decimals']))
+        if (isset($options['decimals'])) {
             $decimals = $options['decimals'];
+        }
         
         $position = 0;
         do {
@@ -205,8 +224,9 @@ class DefaultConverter_DataHandler_TimePeriod extends BaseDataHandler
 {
     public function parse($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         if (Util::isInteger($value)) {
             return (int)$value;
         }
@@ -220,8 +240,9 @@ class DefaultConverter_DataHandler_TimePeriod extends BaseDataHandler
     
     public function format($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         if (!is_numeric($value)) {
             $this->mdh()->throwDataConversionException('timeperiod', 'format', $value, $options);
         }
@@ -252,14 +273,15 @@ class DefaultConverter_DataHandler_Bitmask extends BaseDataHandler
 	 */
     public function parse($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
-        if (!is_array($value))
+        }
+        if (!is_array($value)) {
             $value = explode(',', $value);
+        }
 
         $ret = 0;
-        foreach ($value as $item)
-        {
+        foreach ($value as $item) {
             $ret |= pow(2, $item);
         }
         return $ret;
@@ -272,8 +294,9 @@ class DefaultConverter_DataHandler_Bitmask extends BaseDataHandler
      */
     public function format($value, $options)
     {
-        if ($value === null || $value == '')
+        if ($value === null || $value == '') {
             return null;
+        }
         
         if (!Util::isInteger($value)) {
             $this->mdh()->throwDataConversionException('bitmask', 'format', $value, $options);
