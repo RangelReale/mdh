@@ -3,6 +3,7 @@
 namespace RangelReale\mdh;
 
 use RangelReale\mdh\base\Object;
+use RangelReale\mdh\base\ObjectUtil;
 
 class BaseConverter extends Object implements IConverter
 {
@@ -12,12 +13,8 @@ class BaseConverter extends Object implements IConverter
 
     public function __construct($mdh, $config = [])
     {
-        parent::__construct($config);
-        
-        if (!($mdh instanceof BaseMDH))
-            throw new MDHException('Invalid MDH class');
-        
         $this->_mdh = $mdh;
+        parent::__construct($config);
     }
 
     public function mdh()
@@ -40,27 +37,60 @@ class BaseConverter extends Object implements IConverter
         return $this->getHandler($datatype)->format($value, $options);
     }
     
-    public function getHandler($datatype)
+    public function getHandler($id, $throwException = true)
     {
-        if (isset($this->_datahandlers[$datatype])) {
-            return $this->_datahandlers[$datatype];
+        if (isset($this->_datahandlers[$id])) {
+            return $this->_datahandlers[$id];
         }
-        if (isset($this->_datahandlersdef[$datatype])) {
-            $this->_datahandlers[$datatype] = Util::createObject($this->_datahandlersdef[$datatype], $this);
-            return $this->_datahandlers[$datatype];
-        }
-        throw new InvalidDataHandlerException($datatype);
+
+        if (isset($this->_datahandlersdef[$id])) {
+            $definition = $this->_datahandlersdef[$id];
+            if (is_object($definition) && !$definition instanceof Closure) {
+                return $this->_datahandlers[$id] = $definition;
+            } else {
+                return $this->_datahandlers[$id] = ObjectUtil::createObject($definition, [$this->_mdh, $this]);
+            }
+        } elseif ($throwException) {
+            throw new InvalidDataHandlerException($id);
+        } else {
+            return null;
+        }            
     }
     
-    public function setHandler($datatype, $handler)
+    public function setHandler($id, $definition)
     {
-        if (is_array($handler)) {
-            $this->_datahandlersdef[$datatype] = $handler;
-        } elseif ($handler instanceof IDataHandler) {
-            $this->_datahandlersdef[$datatype] = true;
-            $this->_datahandlers[$datatype] = $handler;
+        if ($definition === null) {
+            unset($this->_datahandlers[$id], $this->_datahandlersdef[$id]);
+            return;
+        }
+
+        unset($this->_datahandlers[$id]);
+
+        if (is_object($definition) || is_callable($definition, true)) {
+            // an object, a class name, or a PHP callable
+            $this->_datahandlersdef[$id] = $definition;
+        } elseif (is_array($definition)) {
+            // a configuration array
+            if (isset($definition['class'])) {
+                $this->_datahandlersdef[$id] = $definition;
+            } else {
+                throw new MDHException("The configuration for the \"$id\" handler must contain a \"class\" element.");
+            }
         } else {
-            throw new MDHException('Invalid handler');
+            throw new MDHException("Unexpected configuration type for the \"$id\" handler: " . gettype($definition));
         }
     }
+    
+    public function getHandlers($returnDefinitions = true)
+    {
+        return $returnDefinitions ? $this->_datahandlersdef : $this->_datahandlers;
+    }
+    
+    public function setHandlers($handlers)
+    {
+        foreach ($handlers as $id => $handler) {
+            $this->setHandler($id, $handler);
+        }
+    }
+    
 }

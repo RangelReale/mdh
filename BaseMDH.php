@@ -4,8 +4,6 @@ namespace RangelReale\mdh;
 
 use RangelReale\mdh\base\Object;
 use RangelReale\mdh\base\ObjectUtil;
-use RangelReale\mdh\def\DefaultConverter;
-use RangelReale\mdh\user\UserConverter;
 
 /**
  * Class BaseMDH
@@ -13,7 +11,7 @@ use RangelReale\mdh\user\UserConverter;
 class BaseMDH extends Object
 {
     private $_converters = [];
-    private $_convertersDef = [
+    private $_convertersdef = [
         'default' => 'RangelReale\mdh\def\DefaultConverter',
         'user' => 'RangelReale\mdh\user\UserConverter',
     ];
@@ -39,9 +37,9 @@ class BaseMDH extends Object
         /*
         $this->_converters['default'] = new DefaultConverter($this);
         $this->_converters['user'] = new UserConverter($this);
+         */
         
         $this->addDataTypeAlias('decimalfull', 'decimal');
-         */
     }
     
     /**
@@ -203,8 +201,8 @@ class BaseMDH extends Object
             return $this->_converters[$id];
         }
 
-        if (isset($this->_convertersDef[$id])) {
-            $definition = $this->_convertersDef[$id];
+        if (isset($this->_convertersdef[$id])) {
+            $definition = $this->_convertersdef[$id];
             if (is_object($definition) && !$definition instanceof Closure) {
                 return $this->_converters[$id] = $definition;
             } else {
@@ -226,7 +224,7 @@ class BaseMDH extends Object
     public function setConverter($id, $definition)
     {
         if ($definition === null) {
-            unset($this->_converters[$id], $this->_convertersDef[$id]);
+            unset($this->_converters[$id], $this->_convertersdef[$id]);
             return;
         }
 
@@ -234,11 +232,11 @@ class BaseMDH extends Object
 
         if (is_object($definition) || is_callable($definition, true)) {
             // an object, a class name, or a PHP callable
-            $this->_convertersDef[$id] = $definition;
+            $this->_convertersdef[$id] = $definition;
         } elseif (is_array($definition)) {
             // a configuration array
             if (isset($definition['class'])) {
-                $this->_convertersDef[$id] = $definition;
+                $this->_convertersdef[$id] = $definition;
             } else {
                 throw new MDHException("The configuration for the \"$id\" converter must contain a \"class\" element.");
             }
@@ -250,7 +248,7 @@ class BaseMDH extends Object
 
     public function getConverters($returnDefinitions = true)
     {
-        return $returnDefinitions ? $this->_convertersDef : $this->_converters;
+        return $returnDefinitions ? $this->_convertersdef : $this->_converters;
     }
     
     public function setConverters($converters)

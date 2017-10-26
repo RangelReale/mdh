@@ -3,7 +3,7 @@
 namespace RangelReale\mdh\user;
 
 use RangelReale\mdh\BaseConverter;
-use RangelReale\mdh\IDataHandler;
+use RangelReale\mdh\BaseDataHandler;
 use RangelReale\mdh\Util;
 use RangelReale\mdh\DataConversionException;
 
@@ -17,17 +17,19 @@ class UserConverter extends BaseConverter
     
     public function __construct($mdh, $config = [])
     {
-        parent::__construct($mdh, $config);
-        
         $this->_deflocale = new UserConverterLocale();
 
-        $this->setHandler('boolean', ['RangelReale\mdh\user\UserConverter_DataHandler_Boolean', Util::CREATEOBJECT_THIS]);
-        $this->setHandler('decimal', ['RangelReale\mdh\user\UserConverter_DataHandler_Decimal', Util::CREATEOBJECT_THIS, 2, \NumberFormatter::DECIMAL]);
-        $this->setHandler('currency', ['RangelReale\mdh\user\UserConverter_DataHandler_Decimal', Util::CREATEOBJECT_THIS, 2, \NumberFormatter::CURRENCY]);
-        $this->setHandler('decimalfull', ['RangelReale\mdh\user\UserConverter_DataHandler_Decimal', Util::CREATEOBJECT_THIS, -1]);
-        $this->setHandler('date', ['RangelReale\mdh\user\UserDataHandler_Datetime', Util::CREATEOBJECT_THIS, 'date']);
-        $this->setHandler('time', ['RangelReale\mdh\user\UserDataHandler_Datetime', Util::CREATEOBJECT_THIS, 'time']);
-        $this->setHandler('datetime', ['RangelReale\mdh\user\UserDataHandler_Datetime', Util::CREATEOBJECT_THIS, 'datetime']);
+        $this->setHandlers([
+            'boolean' => ['class' => 'RangelReale\mdh\user\UserConverter_DataHandler_Boolean'],
+            'decimal' => ['class' => 'RangelReale\mdh\user\UserConverter_DataHandler_Decimal', 'decimals'=> 2, 'style'=> \NumberFormatter::DECIMAL],
+            'currency' => ['class' => 'RangelReale\mdh\user\UserConverter_DataHandler_Decimal', 'decimals' => 2, 'style' => \NumberFormatter::CURRENCY],
+            'decimalfull' => ['class' => 'RangelReale\mdh\user\UserConverter_DataHandler_Decimal', 'decimals' => -1],
+            'date' => ['class' => 'RangelReale\mdh\user\UserDataHandler_Datetime', 'type' => 'date'],
+            'time' => ['class' => 'RangelReale\mdh\user\UserDataHandler_Datetime', 'type' => 'time'],
+            'datetime' => ['class' => 'RangelReale\mdh\user\UserDataHandler_Datetime', 'type' => 'datetime'],
+        ]);
+        
+        parent::__construct($mdh, $config);
     }
 
     public function setLocale($locale, $userconverterlocale)
@@ -49,35 +51,27 @@ class UserConverter extends BaseConverter
     }
 }
 
-class UserConverter_DataHandler_Boolean implements IDataHandler
+class UserConverter_DataHandler_Boolean extends BaseDataHandler
 {
-    private $_converter;
-
-    public function __construct($converter)
-    {
-        $this->_converter = $converter;
-    }
-    
     public function parse($value, $options)
     {
         if ($value === null || $value == '')
             return null;
-        return $this->_converter->getLocaleDefault()->parseBoolean($value, $options);
+        return $this->converter()->getLocaleDefault()->parseBoolean($value, $options);
     }
     
     public function format($value, $options)
     {
         if ($value === null || $value == '')
             return null;
-        return $this->_converter->getLocaleDefault()->formatBoolean($value, $options);
+        return $this->converter()->getLocaleDefault()->formatBoolean($value, $options);
     }
 }
 
 
-class UserDataHandler_Datetime implements IDataHandler
+class UserDataHandler_Datetime extends BaseDataHandler
 {
-    private $_converter;
-    private $_type;
+    public $type;
     
     private function _formatToICUType($type)
     {
@@ -95,12 +89,6 @@ class UserDataHandler_Datetime implements IDataHandler
         return \IntlDateFormatter::SHORT;
     }
     
-    public function __construct($converter, $type)
-    {
-        $this->_converter = $converter;
-        $this->_type = $type;
-    }
-    
     public function parse($value, $options)
     {
         if ($value === null || $value == '')
@@ -113,7 +101,7 @@ class UserDataHandler_Datetime implements IDataHandler
                 break;
         }
         if ($parse === false)
-            $this->_converter->mdh()->throwDataConversionException($this->_type, 'parse', $value, $options);
+            $this->mdh()->throwDataConversionException($this->type, 'parse', $value, $options);
         $ret = new \DateTime();
         $ret->setTimestamp($parse);
         return $ret;
@@ -125,7 +113,7 @@ class UserDataHandler_Datetime implements IDataHandler
             return null;
         $value = Util::formatToDateTime($value);
         if ($value === false)
-            $this->_converter->mdh()->throwDataConversionException($this->_type, 'format', $value, $options);
+            $this->mdh()->throwDataConversionException($this->type, 'format', $value, $options);
         $formatter = $this->createFormatterSingle($options);
         return $formatter->format($value);
     }
@@ -142,29 +130,29 @@ class UserDataHandler_Datetime implements IDataHandler
         if (isset($options['format']) && $options['format'] !== null)
             $ltype = (int)$options['format'];
         
-        $locale = $this->_converter->getLocaleDefault();
+        $locale = $this->converter()->getLocaleDefault();
         $fmt = new UserConverterLocaleTimeFormat();
         
-        switch ($this->_type)
+        switch ($this->type)
         {
             case 'date': 
             {
                 if ($ltype === null) 
-                    $ltype=$this->_converter->mdh()->dateFormat;
+                    $ltype=$this->mdh()->dateFormat;
                 $fmt = $locale->getDateFormat($ltype);
                 break;
             }
             case 'time': 
             {
                 if ($ltype === null) 
-                    $ltype=$this->_converter->mdh()->timeFormat;
+                    $ltype=$this->mdh()->timeFormat;
                 $fmt = $locale->getTimeFormat($ltype);
                 break;
             }
             case 'datetime': 
             {
                 if ($ltype === null) 
-                    $ltype=$this->_converter->mdh()->dateTimeFormat;
+                    $ltype=$this->mdh()->dateTimeFormat;
                 $fmt = $locale->getDateTimeFormat($ltype);
                 break;
             }
@@ -175,11 +163,11 @@ class UserDataHandler_Datetime implements IDataHandler
         foreach ($fmt as $f) {
             /*
             echo '<span style="border: solid 1px black">';
-            echo $this->_type, ' @ ', $datetype, ' @ ', $timetype, ' @ ', $pattern; 
+            echo $this->type, ' @ ', $datetype, ' @ ', $timetype, ' @ ', $pattern; 
             echo '</span><br/>';
              */
             
-            $f = new \IntlDateFormatter($this->_converter->mdh()->getLocale(), 
+            $f = new \IntlDateFormatter($this->mdh()->getLocale(), 
                 $this->_formatToICUType($f->dateFormat), 
                 $this->_formatToICUType($f->timeFormat), 
                 null, null, 
@@ -191,18 +179,10 @@ class UserDataHandler_Datetime implements IDataHandler
     }
 }
 
-class UserConverter_DataHandler_Decimal implements IDataHandler
+class UserConverter_DataHandler_Decimal extends BaseDataHandler
 {
-    private $_converter;
-    private $_decimals;
-    private $_style;
-    
-    public function __construct($converter, $decimals = 2, $style = \NumberFormatter::DECIMAL)
-    {
-        $this->_converter = $converter;
-        $this->_decimals = $decimals;
-        $this->_style = $style;
-    }
+    public $decimals = 2;
+    public $style = \NumberFormatter::DECIMAL;
     
     public function parse($value, $options)
     {
@@ -211,7 +191,7 @@ class UserConverter_DataHandler_Decimal implements IDataHandler
         $offset = 0;
         $ret = $this->createFormatter($options)->parse($value, \NumberFormatter::TYPE_DOUBLE, $offset);
         if ($ret === false || $offset != strlen($value))
-            $this->_converter->mdh()->throwDataConversionException('decimal', 'parse', $value, $options);
+            $this->mdh()->throwDataConversionException('decimal', 'parse', $value, $options);
         return $ret;
     }
     
@@ -224,11 +204,11 @@ class UserConverter_DataHandler_Decimal implements IDataHandler
     
     private function createFormatter($options)
     {
-        $decimals = $this->_decimals;
+        $decimals = $this->decimals;
         if (is_array($options)) {
             if (isset($options['decimals'])) $decimals = $options['decimals'];
         }
-        $formatter = new \NumberFormatter($this->_converter->mdh()->getLocale(), $this->_style);
+        $formatter = new \NumberFormatter($this->mdh()->getLocale(), $this->style);
         $formatter->setAttribute(\NumberFormatter::LENIENT_PARSE, false);
         if ($decimals >= 0) {
             $formatter->setAttribute(\NumberFormatter::MAX_FRACTION_DIGITS, $decimals);

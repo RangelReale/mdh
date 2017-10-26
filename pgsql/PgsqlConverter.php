@@ -3,7 +3,7 @@
 namespace RangelReale\mdh\pgsql;
 
 use RangelReale\mdh\BaseConverter;
-use RangelReale\mdh\IDataHandler;
+use RangelReale\mdh\BaseDataHandler;
 use RangelReale\mdh\Util;
 
 /**
@@ -13,18 +13,19 @@ class PgsqlConverter extends BaseConverter
 {
     public function __construct($mdh, $config = [])
     {
+        $this->setHandlers([
+            'date' => ['class' => 'RangelReale\mdh\pgsql\PgsqlDataHandler_Datetime', 'type' => 'date'],
+            'time' => ['class' => 'RangelReale\mdh\pgsql\PgsqlDataHandler_Datetime', 'type' => 'time'],
+            'datetime' => ['class' => 'RangelReale\mdh\pgsql\PgsqlDataHandler_Datetime', 'type' => 'datetime'],
+        ]);
+        
         parent::__construct($mdh, $config);
-
-        $this->setHandler('date', ['RangelReale\mdh\pgsql\PgsqlDataHandler_Datetime', Util::CREATEOBJECT_THIS, 'date']);
-        $this->setHandler('time', ['RangelReale\mdh\pgsql\PgsqlDataHandler_Datetime', Util::CREATEOBJECT_THIS, 'time']);
-        $this->setHandler('datetime', ['RangelReale\mdh\pgsql\PgsqlDataHandler_Datetime', Util::CREATEOBJECT_THIS, 'datetime']);
     }
 }
 
-class PgsqlDataHandler_Datetime implements IDataHandler
+class PgsqlDataHandler_Datetime extends BaseDataHandler
 {
-    private $_converter;
-    private $_type;
+    public $type;
     
     private $_type_format = [
         'date' => 'Y-m-d',
@@ -32,19 +33,13 @@ class PgsqlDataHandler_Datetime implements IDataHandler
         'datetime' => 'Y-m-d H:i:s.uP',
     ];
     
-    public function __construct($converter, $type)
-    {
-        $this->_converter = $converter;
-        $this->_type = $type;
-    }
-    
     public function parse($value, $options)
     {
         if ($value === null || $value == '')
             return null;
-        $ret = \DateTime::createFromFormat($this->_type_format[$this->_type], $value);
+        $ret = \DateTime::createFromFormat($this->_type_format[$this->type], $value);
         if ($ret === false) {
-            $this->_converter->mdh()->throwDataConversionException($this->_type, 'parse', $value, $options);
+            $this->mdh()->throwDataConversionException($this->type, 'parse', $value, $options);
         }
         return $ret;
     }
@@ -55,8 +50,8 @@ class PgsqlDataHandler_Datetime implements IDataHandler
             return null;
         $value = Util::formatToDateTime($value);
         if ($value === false) {
-            $this->_converter->mdh()->throwDataConversionException($this->_type, 'format', $value, $options);
+            $this->mdh()->throwDataConversionException($this->type, 'format', $value, $options);
         }
-        return $value->format($this->_type_format[$this->_type]);
+        return $value->format($this->_type_format[$this->type]);
     }
 }

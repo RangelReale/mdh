@@ -5,7 +5,7 @@ namespace RangelReale\mdh;
 /**
  * Data handler that just returns the value without any processing
  */
-class DataHandler_NOP implements IDataHandler
+class DataHandler_NOP extends BaseDataHandler
 {
     public function parse($value, $options)
     {
