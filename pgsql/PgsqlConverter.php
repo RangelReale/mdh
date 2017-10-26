@@ -11,9 +11,9 @@ use RangelReale\mdh\Util;
  */
 class PgsqlConverter extends BaseConverter
 {
-    public function __construct($mdh)
+    public function __construct($mdh, $config = [])
     {
-        parent::__construct($mdh);
+        parent::__construct($mdh, $config);
 
         $this->setHandler('date', ['RangelReale\mdh\pgsql\PgsqlDataHandler_Datetime', Util::CREATEOBJECT_THIS, 'date']);
         $this->setHandler('time', ['RangelReale\mdh\pgsql\PgsqlDataHandler_Datetime', Util::CREATEOBJECT_THIS, 'time']);

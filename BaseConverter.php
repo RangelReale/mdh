@@ -2,14 +2,18 @@
 
 namespace RangelReale\mdh;
 
-class BaseConverter implements IConverter
+use RangelReale\mdh\base\Object;
+
+class BaseConverter extends Object implements IConverter
 {
     private $_mdh;
     private $_datahandlersdef = [];
     private $_datahandlers = [];
 
-    public function __construct($mdh)
+    public function __construct($mdh, $config = [])
     {
+        parent::__construct($config);
+        
         if (!($mdh instanceof BaseMDH))
             throw new MDHException('Invalid MDH class');
         

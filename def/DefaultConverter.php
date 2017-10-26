@@ -12,9 +12,9 @@ use RangelReale\mdh\DataHandler_NOP;
  */
 class DefaultConverter extends BaseConverter
 {
-    public function __construct($mdh)
+    public function __construct($mdh, $config = [])
     {
-        parent::__construct($mdh);
+        parent::__construct($mdh, $config);
 
         $this->setHandler('raw', ['RangelReale\mdh\DataHandler_NOP']);
         $this->setHandler('text', ['RangelReale\mdh\def\DefaultConverter_DataHandler_Text']);

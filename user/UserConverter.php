@@ -15,9 +15,9 @@ class UserConverter extends BaseConverter
     private $_deflocale;
     private $_locales = [];
     
-    public function __construct($mdh)
+    public function __construct($mdh, $config = [])
     {
-        parent::__construct($mdh);
+        parent::__construct($mdh, $config);
         
         $this->_deflocale = new UserConverterLocale();
 

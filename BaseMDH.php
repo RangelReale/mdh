@@ -2,16 +2,21 @@
 
 namespace RangelReale\mdh;
 
+use RangelReale\mdh\base\Object;
+use RangelReale\mdh\base\ObjectUtil;
 use RangelReale\mdh\def\DefaultConverter;
 use RangelReale\mdh\user\UserConverter;
 
 /**
  * Class BaseMDH
  */
-class BaseMDH
+class BaseMDH extends Object
 {
     private $_converters = [];
-    private $_convertersProp = [];
+    private $_convertersDef = [
+        'default' => 'RangelReale\mdh\def\DefaultConverter',
+        'user' => 'RangelReale\mdh\user\UserConverter',
+    ];
     private $_dataconversionmessage;
     private $_datatypealiases = [];
 
@@ -22,18 +27,21 @@ class BaseMDH
     /**
      * Constructor
      */
-    public function __construct()
+    public function __construct($config = [])
     {
+        parent::__construct($config);
         $this->_dataconversionmessage = new DataConversionMessage;
         $this->initConverters();
     }
     
     protected function initConverters()
     {
+        /*
         $this->_converters['default'] = new DefaultConverter($this);
         $this->_converters['user'] = new UserConverter($this);
         
         $this->addDataTypeAlias('decimalfull', 'decimal');
+         */
     }
     
     /**
@@ -54,18 +62,17 @@ class BaseMDH
             $converter = 'default';
         $options = array_merge($options, ['__converter'=>$converter]);
         
-        if (isset($this->_converters[$converter])) {
+        $converters = [$converter];
+        if ($converter != 'default')
+            $converters[] = 'default';
+        
+        foreach ($converters as $conv) {
             foreach ($this->getDataTypeAliasesFor($datatype) as $curdatatype) {
-                if ($this->_converters[$converter]->canConvert($curdatatype))
-                    return $this->_converters[$converter]->parse($curdatatype, $value, $options, $this);
+                if ($this->getConverter($conv)->canConvert($curdatatype))
+                    return $this->getConverter($conv)->parse($curdatatype, $value, $options, $this);
             }
-            foreach ($this->getDataTypeAliasesFor($datatype) as $curdatatype) {
-                if ($this->_converters['default']->canConvert($curdatatype))
-                    return $this->_converters['default']->parse($curdatatype, $value, $options, $this);
-            }
-            $this->throwDataConversionException($datatype, 'parse', $value, $options);
         }
-        throw new InvalidConverterException($converter);
+        $this->throwDataConversionException($datatype, 'parse', $value, $options);
     }
     
     /**
@@ -86,18 +93,17 @@ class BaseMDH
             $converter = 'default';
         $options = array_merge($options, ['__converter'=>$converter]);
         
-        if (isset($this->_converters[$converter])) {
+        $converters = [$converter];
+        if ($converter != 'default')
+            $converters[] = 'default';
+        
+        foreach ($converters as $conv) {
             foreach ($this->getDataTypeAliasesFor($datatype) as $curdatatype) {
-                if ($this->_converters[$converter]->canConvert($curdatatype))
-                    return $this->_converters[$converter]->format($curdatatype, $value, $options, $this);
+                if ($this->getConverter($conv)->canConvert($curdatatype))
+                    return $this->getConverter($conv)->format($curdatatype, $value, $options, $this);
             }
-            foreach ($this->getDataTypeAliasesFor($datatype) as $curdatatype) {
-                if ($this->_converters['default']->canConvert($curdatatype))
-                    return $this->_converters['default']->format($curdatatype, $value, $options, $this);
-            }
-            $this->throwDataConversionException($datatype, 'format', $value, $options);
         }
-        throw new InvalidConverterException($converter);
+        $this->throwDataConversionException($datatype, 'format', $value, $options);
     }
     
     /**
@@ -191,21 +197,67 @@ class BaseMDH
      * @param string $name converter name
      * @return IConverter converter
      */
-    public function getConverter($name)
+    public function getConverter($id, $throwException = true)
     {
-        return $this->_converters[$name];
+        if (isset($this->_converters[$id])) {
+            return $this->_converters[$id];
+        }
+
+        if (isset($this->_convertersDef[$id])) {
+            $definition = $this->_convertersDef[$id];
+            if (is_object($definition) && !$definition instanceof Closure) {
+                return $this->_converters[$id] = $definition;
+            } else {
+                return $this->_converters[$id] = ObjectUtil::createObject($definition, [$this]);
+            }
+        } elseif ($throwException) {
+            throw new InvalidConverterException($id);
+        } else {
+            return null;
+        }            
     }
     
-    // 
     /**
-     * Adds a converter
+     * Sets a converter
      * 
      * @param string $name converter name
-     * @param IConverter $converter converter
+     * @param array|IConverter $converter converter
      */
-    public function setConverter($name, $converter)
+    public function setConverter($id, $definition)
     {
-        $this->_converters[$name] = $converter;
+        if ($definition === null) {
+            unset($this->_converters[$id], $this->_convertersDef[$id]);
+            return;
+        }
+
+        unset($this->_converters[$id]);
+
+        if (is_object($definition) || is_callable($definition, true)) {
+            // an object, a class name, or a PHP callable
+            $this->_convertersDef[$id] = $definition;
+        } elseif (is_array($definition)) {
+            // a configuration array
+            if (isset($definition['class'])) {
+                $this->_convertersDef[$id] = $definition;
+            } else {
+                throw new MDHException("The configuration for the \"$id\" converter must contain a \"class\" element.");
+            }
+        } else {
+            throw new MDHException("Unexpected configuration type for the \"$id\" converter: " . gettype($definition));
+        }
+        
+    }
+
+    public function getConverters($returnDefinitions = true)
+    {
+        return $returnDefinitions ? $this->_convertersDef : $this->_converters;
+    }
+    
+    public function setConverters($converters)
+    {
+        foreach ($converters as $id => $converter) {
+            $this->setConverter($id, $converter);
+        }
     }
     
     /**
