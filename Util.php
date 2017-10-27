@@ -24,6 +24,7 @@ class Util
             }
             $curvalue = $value;
             $value = new \DateTime();
+            $value->setTimezone(new \DateTimeZone('UTC'));
             $value->setTimestamp($curvalue);
         }
         return $value;
