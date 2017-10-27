@@ -5,6 +5,7 @@ namespace RangelReale\mdh\user;
 use RangelReale\mdh\BaseConverter;
 use RangelReale\mdh\BaseDataHandler;
 use RangelReale\mdh\Util;
+use RangelReale\mdh\base\ObjectUtil;
 
 /**
  * Class UserConverter
@@ -70,6 +71,18 @@ class UserConverter extends BaseConverter
             }
         } else {
             throw new MDHException("Unexpected configuration type for the \"$id\" locale: " . gettype($definition));
+        }
+    }
+    
+    public function getLocales($returnDefinitions = true)
+    {
+        return $returnDefinitions ? $this->_localesdef : $this->_locales;
+    }
+    
+    public function setLocales($locales)
+    {
+        foreach ($locales as $id => $locale) {
+            $this->setLocale($id, $locale);
         }
     }
     

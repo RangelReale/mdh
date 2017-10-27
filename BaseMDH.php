@@ -8,9 +8,8 @@ use RangelReale\mdh\base\ObjectUtil;
 /**
  * Class BaseMDH
  */
-class BaseMDH extends Object
+abstract class BaseMDH extends Object
 {
-    public $locale = 'en-US';
     public $dateFormat = IDataHandler::FORMAT_SHORT;
     public $timeFormat = IDataHandler::FORMAT_SHORT;
     public $dateTimeFormat = IDataHandler::FORMAT_SHORT;
@@ -26,6 +25,10 @@ class BaseMDH extends Object
     private $_datatypealiases = [
         'decimalfull' => ['decimal'],
     ];
+    
+    public abstract function getLocale();
+    
+    public abstract function setLocale($value);
     
     /**
      * Convert the value to PHP format using the converter
@@ -229,6 +232,14 @@ class BaseMDH extends Object
             // an object, a class name, or a PHP callable
             $this->_convertersdef[$id] = $definition;
         } elseif (is_array($definition)) {
+            if (isset($this->_convertersdef[$id])) {
+                if (is_array($this->_convertersdef[$id])) {
+                    $definition = array_merge($this->_convertersdef[$id], $definition);
+                } elseif (is_string($this->_convertersdef[$id])) {
+                    $definition = array_merge(['class'=>$this->_convertersdef[$id]], $definition);
+                }
+            }
+            
             // a configuration array
             if (isset($definition['class'])) {
                 $this->_convertersdef[$id] = $definition;
