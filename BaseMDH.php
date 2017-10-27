@@ -39,20 +39,24 @@ class BaseMDH extends Object
      */
     public function parse($converter, $datatype, $value, $options = [])
     {
-        if ($converter === null)
+        if ($converter === null) {
             return $value;
-        if ($converter == '') 
+        }
+        if ($converter == '')  {
             $converter = 'default';
+        }
         $options = array_merge($options, ['__converter'=>$converter]);
         
         $converters = [$converter];
-        if ($converter != 'default')
+        if ($converter != 'default') {
             $converters[] = 'default';
+        }
         
         foreach ($converters as $conv) {
             foreach ($this->getDataTypeAliasesFor($datatype) as $curdatatype) {
-                if ($this->getConverter($conv)->canConvert($curdatatype))
+                if ($this->getConverter($conv)->canConvert($curdatatype)) {
                     return $this->getConverter($conv)->parse($curdatatype, $value, $options, $this);
+                }
             }
         }
         $this->throwDataConversionException($datatype, 'parse', $value, $options);
@@ -70,20 +74,24 @@ class BaseMDH extends Object
      */
     public function format($converter, $datatype, $value, $options = [])
     {
-        if ($converter === null)
+        if ($converter === null) {
             return $value;
-        if ($converter == '') 
+        }
+        if ($converter == '') {
             $converter = 'default';
+        }
         $options = array_merge($options, ['__converter'=>$converter]);
         
         $converters = [$converter];
-        if ($converter != 'default')
+        if ($converter != 'default') {
             $converters[] = 'default';
+        }
         
         foreach ($converters as $conv) {
             foreach ($this->getDataTypeAliasesFor($datatype) as $curdatatype) {
-                if ($this->getConverter($conv)->canConvert($curdatatype))
+                if ($this->getConverter($conv)->canConvert($curdatatype)) {
                     return $this->getConverter($conv)->format($curdatatype, $value, $options, $this);
+                }
             }
         }
         $this->throwDataConversionException($datatype, 'format', $value, $options);
@@ -102,10 +110,12 @@ class BaseMDH extends Object
      */
     public function convert($converterFrom, $converterTo, $datatype, $value, $optionsFrom = [], $optionsTo = [])
     {
-        if ($converterFrom !== null)
+        if ($converterFrom !== null) {
             $value = $this->parse($converterFrom, $datatype, $value, $optionsFrom);
-        if ($converterTo !== null)
+        }
+        if ($converterTo !== null) {
             $value = $this->format($converterTo, $datatype, $value, $optionsTo);
+        }
         return $value;
     }
     
@@ -335,8 +345,9 @@ class BaseMDH extends Object
     private function getDataTypeAliasesFor($datatype)
     {
         $ret = [$datatype];
-        if (isset($this->_datatypealiases[$datatype]))
+        if (isset($this->_datatypealiases[$datatype])) {
             $ret = array_merge($ret, $this->_datatypealiases[$datatype]);
+        }
         return $ret;
     }
 }
