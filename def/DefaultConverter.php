@@ -14,7 +14,7 @@ class DefaultConverter extends BaseConverter
     public function init()
     {
         parent::init();
-        setHandlers([
+        $this->setHandlers([
             'raw' => ['class' => 'RangelReale\mdh\DataHandler_NOP'],
             'text' => ['class' => 'RangelReale\mdh\def\DefaultConverter_DataHandler_Text'],
             'boolean' => ['class' => 'RangelReale\mdh\def\DefaultConverter_DataHandler_Boolean'],
