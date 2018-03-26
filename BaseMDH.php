@@ -2,13 +2,13 @@
 
 namespace RangelReale\mdh;
 
-use RangelReale\mdh\base\Object;
+use RangelReale\mdh\base\BaseObject;
 use RangelReale\mdh\base\ObjectUtil;
 
 /**
  * Class BaseMDH
  */
-abstract class BaseMDH extends Object
+abstract class BaseMDH extends BaseObject
 {
     public $dateFormat = IDataHandler::FORMAT_SHORT;
     public $timeFormat = IDataHandler::FORMAT_SHORT;

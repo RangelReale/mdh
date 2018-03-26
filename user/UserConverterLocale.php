@@ -2,13 +2,13 @@
 
 namespace RangelReale\mdh\user;
 
-use RangelReale\mdh\base\Object;
+use RangelReale\mdh\base\BaseObject;
 use RangelReale\mdh\IDataHandler;
 
 /**
  * Class UserConverterLocale
  */
-class UserConverterLocale extends Object
+class UserConverterLocale extends BaseObject
 {
     private $_mdh;
 

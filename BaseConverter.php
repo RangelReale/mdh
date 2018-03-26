@@ -2,10 +2,10 @@
 
 namespace RangelReale\mdh;
 
-use RangelReale\mdh\base\Object;
+use RangelReale\mdh\base\BaseObject;
 use RangelReale\mdh\base\ObjectUtil;
 
-class BaseConverter extends Object implements IConverter
+class BaseConverter extends BaseObject implements IConverter
 {
     private $_mdh;
     private $_datahandlersdef = [];
