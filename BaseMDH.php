@@ -348,7 +348,7 @@ abstract class BaseMDH extends BaseObject
     public function __get($name)
     {
         if (isset($this->_convertersdef[$name])) {
-            return $this->getConverter($name);
+            return new ConverterProxy($this, $name);
         }
         return parent::__get($name);
     }
